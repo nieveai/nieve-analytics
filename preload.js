@@ -1,0 +1,30 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  openFile: () => ipcRenderer.invoke('open-file'),
+  openSqliteFile: () => ipcRenderer.invoke('open-sqlite-file'),
+  loadSqliteData: (filePath, query, sourceName) => ipcRenderer.invoke('load-sqlite-data', filePath, query, sourceName),
+  refreshDataSource: (dataSourceId) => ipcRenderer.invoke('refresh-data-source', dataSourceId),
+  generatePlot: (dataSourceId, command, transformId) => ipcRenderer.invoke('generate-plot', dataSourceId, command, transformId),
+  getInitialState: () => ipcRenderer.invoke('get-initial-state'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  deleteVisualization: (dataSourceId, index) => ipcRenderer.invoke('delete-visualization', dataSourceId, index),
+  deleteDataSource: (dataSourceId, activeDataSourceId) => ipcRenderer.invoke('delete-data-source', dataSourceId, activeDataSourceId),
+  modifyPlot: (dataSourceId, index, existingCode, instruction) => ipcRenderer.invoke('modify-plot', dataSourceId, index, existingCode, instruction),
+  runModifiedCode: (dataSourceId, visualizationId, modifiedCode) => ipcRenderer.invoke('run-modified-code', dataSourceId, visualizationId, modifiedCode),
+  analyze: (dataSourceId, command, transformId) => ipcRenderer.invoke('analyze', dataSourceId, command, transformId),
+  modifyAnalysis: (dataSourceId, analysisId, existingCode, instruction) => ipcRenderer.invoke('modify-analysis', dataSourceId, analysisId, existingCode, instruction),
+  runModifiedAnalysisCode: (dataSourceId, analysisId, modifiedCode) => ipcRenderer.invoke('run-modified-analysis-code', dataSourceId, analysisId, modifiedCode),
+  deleteAnalysis: (dataSourceId, analysisId) => ipcRenderer.invoke('delete-analysis', dataSourceId, analysisId),
+  transform: (dataSourceId, command) => ipcRenderer.invoke('transform', dataSourceId, command),
+  modifyTransform: (dataSourceId, transformId, existingCode, instruction) => ipcRenderer.invoke('modify-transform', dataSourceId, transformId, existingCode, instruction),
+  runModifiedTransformCode: (dataSourceId, transformId, modifiedCode) => ipcRenderer.invoke('run-modified-transform-code', dataSourceId, transformId, modifiedCode),
+  deleteTransform: (dataSourceId, transformId) => ipcRenderer.invoke('delete-transform', dataSourceId, transformId),
+  newTransform: (dataSourceId, transformId, instruction) => ipcRenderer.invoke('new-transform', dataSourceId, transformId, instruction),
+  showPlotContextMenu: (imageData) => ipcRenderer.send('show-plot-context-menu', imageData),
+  updateItemName: (dataSourceId, itemId, itemType, name) => ipcRenderer.invoke('update-item-name', { dataSourceId, itemId, itemType, name }),
+  createDerivedDataSource: (selectedSources, newName, instruction) => ipcRenderer.invoke('create-derived-data-source', { selectedSources, newName, instruction }),
+  loadMoreData: (dataSourceId, transformId, offset, limit) => ipcRenderer.invoke('load-more-data', { dataSourceId, transformId, offset, limit }),
+  exportTransformData: (dataSourceId, transformId) => ipcRenderer.invoke('export-transform-data', { dataSourceId, transformId }),
+  showErrorDialog: (title, content) => ipcRenderer.invoke('show-error-dialog', { title, content })
+});

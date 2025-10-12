@@ -1,0 +1,50 @@
+{
+  "name": "nieve-analytics",
+  "version": "0.1.0",
+  "description": "An AI-assisted data visualization tool.",
+  "main": "index.js",
+  "homepage": "https://github.com/nieve-ai/nieve-analytics",
+  "scripts": {
+    "test": "jest",
+    "start": "electron .",
+    "rebuild": "electron-rebuild",
+    "postinstall": "electron-rebuild",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux deb --x64"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Nieve AI",
+    "email": "nieveanalytics@gmail.com"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^38.2.2",
+    "electron-builder": "^26.0.12",
+    "electron-rebuild": "^3.2.9",
+    "jest": "^30.2.0"
+  },
+  "build": {
+    "appId": "com.example.nieve-analytics",
+    "productName": "Nieve Analytics",
+    "files": [
+      "index.html",
+      "index.js",
+      "preload.js",
+      "main.py",
+      ".venv/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "category": "Utility"
+    }
+  },
+  "dependencies": {
+    "zeromq": "^6.5.0"
+  }
+}

@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Assisted Data Analytics</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --primary-hover-color: #5aa1f2;
+            --background-color: #f4f7fc;
+            --panel-background: #ffffff;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-text-color: #777;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        body, html { margin: 0; padding: 0; font-family: var(--font-family); height: 100vh; overflow: hidden; background-color: var(--background-color); color: var(--text-color); }
+        h2 { color: var(--text-color); font-weight: 600; }
+        #app-container { display: flex; height: 100%; }
+        #left-panel { width: 280px; border-right: 1px solid var(--border-color); padding: 20px; box-sizing: border-box; background-color: var(--panel-background); display: flex; flex-direction: column; justify-content: space-between; }
+        #right-panel { flex-grow: 1; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; max-height: 100vh; overflow: auto;}
+        #welcome-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+            color: var(--light-text-color);
+        }
+        #welcome-container h1 {
+            font-size: 28px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+        #welcome-container p {
+            font-size: 16px;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+        #tab-container, #tab-content-container {
+            display: none; /* Hide by default */
+        }
+        button, .btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: var(--border-radius); cursor: pointer; font-size: 14px; font-weight: 500; transition: background-color 0.2s ease; text-align: center; }
+        button:hover, .btn:hover { background-color: var(--primary-hover-color); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #data-source-list { list-style: none; padding: 0; margin-top: 20px; overflow-y: auto; }
+        #data-source-list li { 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 10px; 
+            cursor: pointer; 
+            border-radius: var(--border-radius); 
+            margin-bottom: 8px; 
+            transition: background-color 0.2s ease, color 0.2s ease; 
+        }
+        #data-source-list li:hover { background-color: #e9eff8; }
+        #data-source-list li.active { background-color: var(--primary-color); color: white; font-weight: 500; }
+        .delete-source-btn {
+            background-color: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 5px;
+            display: none; /* Hidden by default */
+        }
+        #data-source-list li:hover .delete-source-btn {
+            display: inline-block; /* Show on hover */
+        }
+        #data-source-list li.active .delete-source-btn {
+            color: white;
+        }
+        .delete-source-btn:hover {
+            color: #c00;
+        }
+        #tab-container { display: flex; border-bottom: 1px solid var(--border-color); }
+        .tab { padding: 12px 18px; cursor: pointer; margin-right: 8px; border-bottom: 2px solid transparent; transition: border-color 0.2s ease, color 0.2s ease; color: var(--light-text-color); }
+        .tab.active { border-bottom: 2px solid var(--primary-color); font-weight: 600; color: var(--text-color); }
+        #tab-content-container { background-color: var(--panel-background); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 var(--border-radius) var(--border-radius); flex-grow: 1; overflow-y: auto; }
+        .tab-content { display: none; padding: 20px; }
+        .tab-content.active { display: flex; flex-direction: column; }
+        .inner-tab-container { display: flex; border-bottom: 1px solid var(--border-color); margin-top: 20px; }
+        .inner-tab { padding: 10px 15px; cursor: pointer; margin-right: 6px; border-bottom: 2px solid transparent; color: var(--light-text-color); }
+        .inner-tab.active { border-bottom: 2px solid var(--primary-color); font-weight: 500; color: var(--text-color); }
+        .inner-tab-content { display: none; padding-top: 20px; flex-grow: 1; }
+        .inner-tab-content.active { display: block; }
+        .card { background: var(--panel-background); padding: 20px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-top: 20px; }
+        .visualization-item { position: relative; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .delete-vis-btn, .modify-vis-btn {
+            width: 24px;
+            height: 24px;
+            background-color: #ddd;
+            color: #2c7d50;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            transition: background-color 0.2s ease;
+            margin-left: 5px;
+        }
+        .delete-vis-btn:hover {
+            background-color: #c00;
+        }
+        .modify-vis-btn {
+            font-size: 14px;
+        }
+        .modify-vis-btn:hover, .transform-vis-btn:hover {
+            background-color: var(--primary-color);
+        }
+        .analysis-btn, .transform-vis-btn {
+            width: 24px;
+            height: 24px;
+            background-color: #ddd;
+            color: #2c7d50;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            transition: background-color 0.2s ease;
+            margin-left: 5px;
+        }
+        .analysis-btn:hover {
+            background-color: var(--primary-color);
+        }
+        .plot-btn {
+            width: 24px;
+            height: 24px;
+            background-color: #ddd;
+            color: #2c7d50;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            transition: background-color 0.2s ease;
+            margin-left: 5px;
+        }
+        .plot-btn:hover {
+            background-color: var(--primary-color);
+        }
+        .visualization-item:last-child { border-bottom: none; }
+        input[type="text"], input[type="password"] { width: calc(100% - 22px); padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 14px; margin-bottom: 10px; }
+        input[type="text"]:focus, input[type="password"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2); }
+        table { border-collapse: collapse; width: 100%; font-size: 14px; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; }
+        th { background-color: #f9fafb; font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f9fafb; }
+        .preview-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        .preview-table-wrapper table {
+            width: auto;
+            min-width: 100%;
+        }
+        .modal-overlay { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal-content { background-color: var(--panel-background); padding: 30px; border: 1px solid var(--border-color); width: 80%; max-width: 500px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); position: relative; }
+        .modal-close { color: #aaa; position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-close:hover, .modal-close:focus { color: var(--text-color); }
+        #settings-container { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
+        .icon-btn { background-color: transparent; color: var(--text-color); display: flex; align-items: center; width: 100%; justify-content: flex-start; }
+        .icon-btn:hover { background-color: #e9eff8; }
+        .icon-btn svg { margin-right: 10px; }
+        .responsive-image {
+        max-width: 100%; /* Ensure it doesn't exceed its container width */
+        height: auto;    /* Automatically adjusts height to maintain aspect ratio */
+        }
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid #fff; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="left-panel">
+            <div>
+                <h2>Data Sources</h2>
+                <button id="add-data-btn">Add Data</button>
+                <ul id="data-source-list"></ul>
+            </div>
+            <div id="settings-container">
+                <button id="settings-btn" class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Settings
+                </button>
+            </div>
+        </div>
+        <div id="right-panel">
+            <div id="welcome-container">
+                <h1>Welcome to Nieve Analytics</h1>
+                <p>Your AI-assisted data analytics tool. To get started, click the "Add Data" button in the left panel to load a CSV file.</p>
+            </div>
+            <div id="tab-container"></div>
+            <div id="tab-content-container"></div>
+        </div>
+    </div>
+
+    <div id="add-data-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Select Data Source Type</h2>
+            <div id="data-source-options">
+                <button id="select-csv-btn">CSV File</button>
+                <button id="select-sqlite-btn" style="margin-left: 10px;">SQLite DB</button>
+                <button id="select-derived-btn" style="margin-left: 10px;">Derived Data Source</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Settings</h2>
+            
+            <div class="inner-tab-container" style="margin-top: 0; margin-bottom: 15px;">
+                <div class="inner-tab active" data-tab="settings-general">General</div>
+                <div class="inner-tab" data-tab="settings-models">Models</div>
+            </div>
+
+            <div id="settings-general-content" class="inner-tab-content active">
+                <label for="preview-num-rows-input">Number of Rows to Preview</label>
+                <input type="text" id="preview-num-rows-input" placeholder="5">
+            </div>
+
+            <div id="settings-models-content" class="inner-tab-content">
+                <div id="models-list-container">
+                    <!-- Models will be dynamically inserted here -->
+                </div>
+                <button id="add-model-btn" style="margin-top: 15px;">Add Model</button>
+            </div>
+
+            <button id="save-settings-btn" style="margin-top: 20px; float: right;">Save</button>
+        </div>
+    </div>
+
+    <div id="sqlite-modal" class="modal-overlay" style="z-index: 201;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close">&times;</span>
+            <h2>Load from SQLite Database</h2>
+            <p id="sqlite-file-path" style="font-style: italic; color: var(--light-text-color);"></p>
+            <div id="sqlite-schema-container" style="display: none;">
+                <h4>Select a table or view:</h4>
+                <select id="table-view-select" size="10" style="width: 100%; margin-bottom: 15px;"></select>
+                
+                <div style="margin-bottom: 15px;">
+                    <input type="radio" id="load-table-radio" name="sqlite-load-type" value="table" checked>
+                    <label for="load-table-radio">Load selected table/view</label>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <input type="radio" id="load-query-radio" name="sqlite-load-type" value="query">
+                    <label for="load-query-radio">Write a custom query</label>
+                    <textarea id="custom-query-textarea" rows="5" style="width: 100%; font-family: monospace; display: none; margin-top: 10px;" placeholder="SELECT * FROM your_table;"></textarea>
+                </div>
+
+                <div style="text-align: right;">
+                    <button id="load-sqlite-data-btn" class="btn">Load Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="derived-source-modal" class="modal-overlay" style="z-index: 201;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close">&times;</span>
+            <h2>Create Derived Data Source</h2>
+            <div id="derived-source-form">
+                <label for="base-sources-select">Select Base Data Sources (hold Ctrl/Cmd to select multiple):</label>
+                <select id="base-sources-select" multiple size="8" style="width: 100%; margin-bottom: 15px;"></select>
+                
+                <label for="derived-source-name-input">New Data Source Name:</label>
+                <input type="text" id="derived-source-name-input" placeholder="e.g., Combined Sales Data">
+
+                <label for="derived-source-instruction-input">Instruction:</label>
+                <input type="text" id="derived-source-instruction-input" placeholder="e.g., merge the two sources on the 'ID' column">
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button id="create-derived-source-btn" class="btn">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader-overlay" class="modal-overlay" style="z-index: 200;">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="confirm-delete-modal" class="modal-overlay" style="z-index: 201;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete this visualization?</p>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancel-delete-btn" class="btn" style="background-color: #777; margin-right: 10px;">Cancel</button>
+                <button id="confirm-delete-btn" class="btn" style="background-color: #c00;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-delete-source-modal" class="modal-overlay" style="z-index: 201;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete this data source and all its visualizations?</p>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancel-delete-source-btn" class="btn" style="background-color: #777; margin-right: 10px;">Cancel</button>
+                <button id="confirm-delete-source-btn" class="btn" style="background-color: #c00;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-delete-analysis-modal" class="modal-overlay" style="z-index: 201;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete this analysis?</p>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancel-delete-analysis-btn" class="btn" style="background-color: #777; margin-right: 10px;">Cancel</button>
+                <button id="confirm-delete-analysis-btn" class="btn" style="background-color: #c00;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-delete-transform-modal" class="modal-overlay" style="z-index: 201;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete this transform?</p>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="cancel-delete-transform-btn" class="btn" style="background-color: #777; margin-right: 10px;">Cancel</button>
+                <button id="confirm-delete-transform-btn" class="btn" style="background-color: #c00;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-modal" class="modal-overlay" style="z-index: 999;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>Execution Error</h2>
+            <p>The following error occurred while running the generated code:</p>
+            <pre id="error-message-content" style="color: #c00; background-color: #fdd; padding: 10px; border-radius: 5px; margin-bottom: 15px; white-space: pre-wrap;"></pre>
+            <p>Generated Code:</p>
+            <textarea id="error-code-content" rows="10" style="width: 100%; font-family: monospace; font-size: 12px;" readonly></textarea>
+        </div>
+    </div>
+
+    <div id="modify-plot-modal" class="modal-overlay" style="z-index: 202;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>Modify Plot</h2>
+            <div id="modify-plot-error-message" style="display: none; color: #c00; background-color: #fdd; padding: 10px; border-radius: 5px; margin-bottom: 15px; white-space: pre-wrap;"></div>
+            <div>
+                <label for="existing-code-textarea">Generated Code:</label>
+                <textarea id="existing-code-textarea" rows="10" style="width: 100%; font-family: monospace; font-size: 12px;"></textarea>
+            </div>
+            <div style="margin-top: 15px;">
+                <label for="modification-instruction-input">Instruction:</label>
+                <input type="text" id="modification-instruction-input" placeholder="e.g., change the plot color to blue">
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="modify-with-instruction-btn" class="btn">Modify with Instruction</button>
+                <button id="modify-with-code-btn" class="btn" style="margin-left: 10px;">Modify with Changed Code</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modify-analysis-modal" class="modal-overlay" style="z-index: 203;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>Modify Analysis</h2>
+            <div id="modify-analysis-error-message" style="display: none; color: #c00; background-color: #fdd; padding: 10px; border-radius: 5px; margin-bottom: 15px; white-space: pre-wrap;"></div>
+            <div>
+                <label for="existing-analysis-code-textarea">Generated Code:</label>
+                <textarea id="existing-analysis-code-textarea" rows="10" style="width: 100%; font-family: monospace; font-size: 12px;"></textarea>
+            </div>
+            <div style="margin-top: 15px;">
+                <label for="analysis-modification-instruction-input">Instruction:</label>
+                <input type="text" id="analysis-modification-instruction-input" placeholder="e.g., calculate the median instead of the mean">
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="modify-analysis-with-instruction-btn" class="btn">Modify with Instruction</button>
+                <button id="modify-analysis-with-code-btn" class="btn" style="margin-left: 10px;">Modify with Changed Code</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modify-transform-modal" class="modal-overlay" style="z-index: 204;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>Modify Transform</h2>
+            <div id="modify-transform-error-message" style="display: none; color: #c00; background-color: #fdd; padding: 10px; border-radius: 5px; margin-bottom: 15px; white-space: pre-wrap;"></div>
+            <div>
+                <label for="existing-transform-code-textarea">Generated Code:</label>
+                <textarea id="existing-transform-code-textarea" rows="10" style="width: 100%; font-family: monospace; font-size: 12px;"></textarea>
+            </div>
+            <div style="margin-top: 15px;">
+                <label for="transform-modification-instruction-input">Instruction:</label>
+                <input type="text" id="transform-modification-instruction-input" placeholder="e.g., convert column 'B' to lowercase">
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="modify-transform-with-instruction-btn" class="btn">Modify with Instruction</button>
+                <button id="modify-transform-with-code-btn" class="btn" style="margin-left: 10px;">Modify with Changed Code</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="new-transform-modal" class="modal-overlay" style="z-index: 205;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>New Transform</h2>
+            <div style="margin-top: 15px;">
+                <label for="new-transform-instruction-input">Instruction:</label>
+                <input type="text" id="new-transform-instruction-input" placeholder="e.g., group by column 'A' and sum column 'B'">
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="create-new-transform-btn" class="btn">Transform</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="analysis-from-transform-modal" class="modal-overlay" style="z-index: 206;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>New Analysis from Transform</h2>
+            <div style="margin-top: 15px;">
+                <label for="new-analysis-instruction-input">Instruction:</label>
+                <input type="text" id="new-analysis-instruction-input" placeholder="e.g., show summary statistics">
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="create-new-analysis-btn" class="btn">Analyze</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="plot-from-transform-modal" class="modal-overlay" style="z-index: 207;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close">&times;</span>
+            <h2>New Plot from Transform</h2>
+            <div style="margin-top: 15px;">
+                <label for="new-plot-instruction-input">Instruction:</label>
+                <input type="text" id="new-plot-instruction-input" placeholder="e.g., plot sales by month">
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="create-new-plot-btn" class="btn">Generate Plot</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+                        let activeDataSourceId = null;
+                        let dataSources = {};
+                        let appSettings = {};
+            
+                        const loaderOverlay = document.getElementById('loader-overlay');
+                        const addDataBtn = document.getElementById('add-data-btn');
+                        const dataSourceList = document.getElementById('data-source-list');
+                        const tabContainer = document.getElementById('tab-container');
+                        const tabContentContainer = document.getElementById('tab-content-container');
+                        const welcomeContainer = document.getElementById('welcome-container');
+                        const addDataModal = document.getElementById('add-data-modal');
+                        const addDataModalCloseBtn = addDataModal.querySelector('.modal-close');
+                        const selectCsvBtn = document.getElementById('select-csv-btn');
+                        const selectSqliteBtn = document.getElementById('select-sqlite-btn');
+                        const selectDerivedBtn = document.getElementById('select-derived-btn');
+
+                        const derivedSourceModal = document.getElementById('derived-source-modal');
+                        const derivedSourceModalCloseBtn = derivedSourceModal.querySelector('.modal-close');
+                        const baseSourcesSelect = document.getElementById('base-sources-select');
+                        const derivedSourceNameInput = document.getElementById('derived-source-name-input');
+                        const derivedSourceInstructionInput = document.getElementById('derived-source-instruction-input');
+                        const createDerivedSourceBtn = document.getElementById('create-derived-source-btn');
+
+                        const sqliteModal = document.getElementById('sqlite-modal');
+                        const sqliteModalCloseBtn = sqliteModal.querySelector('.modal-close');
+                        const sqliteFilePathEl = document.getElementById('sqlite-file-path');
+                        const sqliteSchemaContainer = document.getElementById('sqlite-schema-container');
+                        const tableViewSelect = document.getElementById('table-view-select');
+                        const loadTableRadio = document.getElementById('load-table-radio');
+                        const loadQueryRadio = document.getElementById('load-query-radio');
+                        const customQueryTextarea = document.getElementById('custom-query-textarea');
+                        const loadSqliteDataBtn = document.getElementById('load-sqlite-data-btn');
+                        let currentSqlitePath = null;
+
+                        const settingsBtn = document.getElementById('settings-btn');
+                        const settingsModal = document.getElementById('settings-modal');
+                        const settingsModalCloseBtn = settingsModal.querySelector('.modal-close');
+                        const saveSettingsBtn = document.getElementById('save-settings-btn');
+                        const addModelBtn = document.getElementById('add-model-btn');
+                        const modelsListContainer = document.getElementById('models-list-container');
+            
+                        const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+                        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+                        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+                        const confirmModalCloseBtn = confirmDeleteModal.querySelector('.modal-close');
+                        let deletePayload = null; // To store {dataSourceId, index} for deletion
+            
+                        const confirmDeleteSourceModal = document.getElementById('confirm-delete-source-modal');
+                        const confirmDeleteSourceBtn = document.getElementById('confirm-delete-source-btn');
+                        const cancelDeleteSourceBtn = document.getElementById('cancel-delete-source-btn');
+                        const confirmSourceModalCloseBtn = confirmDeleteSourceModal.querySelector('.modal-close');
+                        let deleteSourcePayload = null; // To store {dataSourceId} for source deletion
+
+                        const confirmDeleteAnalysisModal = document.getElementById('confirm-delete-analysis-modal');
+                        const confirmDeleteAnalysisBtn = document.getElementById('confirm-delete-analysis-btn');
+                        const cancelDeleteAnalysisBtn = document.getElementById('cancel-delete-analysis-btn');
+                        const confirmAnalysisModalCloseBtn = confirmDeleteAnalysisModal.querySelector('.modal-close');
+                        let deleteAnalysisPayload = null;
+
+                        const confirmDeleteTransformModal = document.getElementById('confirm-delete-transform-modal');
+                        const confirmDeleteTransformBtn = document.getElementById('confirm-delete-transform-btn');
+                        const cancelDeleteTransformBtn = document.getElementById('cancel-delete-transform-btn');
+                        const confirmTransformModalCloseBtn = confirmDeleteTransformModal.querySelector('.modal-close');
+                        let deleteTransformPayload = null;
+
+                        const modifyPlotModal = document.getElementById('modify-plot-modal');
+                        const modifyWithInstructionBtn = document.getElementById('modify-with-instruction-btn');
+                        const modifyWithCodeBtn = document.getElementById('modify-with-code-btn');
+                        const cancelModifyBtn = modifyPlotModal.querySelector('.modal-close');
+                        const existingCodeTextarea = document.getElementById('existing-code-textarea');
+                        const modificationInstructionInput = document.getElementById('modification-instruction-input');
+                        let modifyPayload = null; // To store {dataSourceId, index} for modification
+
+                        const modifyAnalysisModal = document.getElementById('modify-analysis-modal');
+                        const modifyAnalysisWithInstructionBtn = document.getElementById('modify-analysis-with-instruction-btn');
+                        const modifyAnalysisWithCodeBtn = document.getElementById('modify-analysis-with-code-btn');
+                        const cancelModifyAnalysisBtn = modifyAnalysisModal.querySelector('.modal-close');
+                        const existingAnalysisCodeTextarea = document.getElementById('existing-analysis-code-textarea');
+                        const analysisModificationInstructionInput = document.getElementById('analysis-modification-instruction-input');
+                        let modifyAnalysisPayload = null;
+
+                        const modifyTransformModal = document.getElementById('modify-transform-modal');
+                        const modifyTransformWithInstructionBtn = document.getElementById('modify-transform-with-instruction-btn');
+                        const modifyTransformWithCodeBtn = document.getElementById('modify-transform-with-code-btn');
+                        const cancelModifyTransformBtn = modifyTransformModal.querySelector('.modal-close');
+                        const existingTransformCodeTextarea = document.getElementById('existing-transform-code-textarea');
+                        const transformModificationInstructionInput = document.getElementById('transform-modification-instruction-input');
+                        let modifyTransformPayload = null;
+
+                        const newTransformModal = document.getElementById('new-transform-modal');
+                        const createNewTransformBtn = document.getElementById('create-new-transform-btn');
+                        const cancelNewTransformBtn = newTransformModal.querySelector('.modal-close');
+                        const newTransformInstructionInput = document.getElementById('new-transform-instruction-input');
+                        let newTransformPayload = null;
+
+                        const analysisFromTransformModal = document.getElementById('analysis-from-transform-modal');
+                        const createNewAnalysisBtn = document.getElementById('create-new-analysis-btn');
+                        const cancelNewAnalysisBtn = analysisFromTransformModal.querySelector('.modal-close');
+                        const newAnalysisInstructionInput = document.getElementById('new-analysis-instruction-input');
+                        let newAnalysisPayload = null;
+
+                        const plotFromTransformModal = document.getElementById('plot-from-transform-modal');
+                        const createNewPlotBtn = document.getElementById('create-new-plot-btn');
+                        const cancelNewPlotBtn = plotFromTransformModal.querySelector('.modal-close');
+                        const newPlotInstructionInput = document.getElementById('new-plot-instruction-input');
+                        let newPlotPayload = null;
+
+                        const errorModal = document.getElementById('error-modal');
+                        const errorCodeContent = document.getElementById('error-code-content');
+                        const errorMessageContent = document.getElementById('error-message-content');
+                        const errorModalCloseBtn = errorModal.querySelector('.modal-close');
+                        errorModalCloseBtn.addEventListener('click', () => errorModal.style.display = 'none');
+
+                        function autoAdjustTextareaHeight(textarea) {
+                            textarea.style.height = (textarea.scrollHeight + 20) + 'px';
+                        }
+
+                        function showErrorModal(errorMessage, code) {
+                            errorMessageContent.textContent = errorMessage;
+                            errorCodeContent.value = code;
+                            errorModal.style.display = 'flex';
+                        }
+            
+                        function handleCodeGenerationError(error, itemType, dataSourceId, command) {
+                            // console.log(`[DEBUG] handle error`, error);
+                            if (error && error.type === 'CodeExecutionError' && error.code) {
+                                showErrorModal(error.message, error.code);
+                            } else {
+                                // Fallback for other types of errors
+                                const errorMessage = error ? error.message : 'An unknown error occurred.';
+                                window.api.showErrorDialog(`Error during ${itemType} generation`, errorMessage);
+                            }
+                        }
+
+                        document.querySelectorAll('#settings-modal .inner-tab').forEach(tab => {
+                            tab.addEventListener('click', () => {
+                                const tabId = tab.dataset.tab;
+
+                                // Deactivate all tabs and content
+                                document.querySelectorAll('#settings-modal .inner-tab').forEach(t => t.classList.remove('active'));
+                                document.querySelectorAll('#settings-modal .inner-tab-content').forEach(c => c.classList.remove('active'));
+
+                                // Activate clicked tab and content
+                                tab.classList.add('active');
+                                document.getElementById(`${tabId}-content`).classList.add('active');
+                            });
+                        });
+
+                        function showLoader() { loaderOverlay.style.display = 'flex'; }
+                        function hideLoader() { loaderOverlay.style.display = 'none'; }
+            
+                        function updateDataSourceList() {
+                            dataSourceList.innerHTML = '';
+                            Object.values(dataSources).forEach(dataSource => {
+                                const listItem = document.createElement('li');
+                                listItem.dataset.dataSourceId = dataSource.id;
+
+                                const textSpan = document.createElement('span');
+                                textSpan.textContent = dataSource.name;
+                                textSpan.style.flexGrow = '1';
+                                textSpan.addEventListener('click', () => switchTab(dataSource.id));
+                                
+                                const deleteBtn = document.createElement('button');
+                                deleteBtn.textContent = '×';
+                                deleteBtn.className = 'delete-source-btn';
+                                deleteBtn.title = 'Delete Data Source';
+                                deleteBtn.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    // Get the ID from the parent LI element's dataset
+                                    const idToDelete = e.target.parentElement.dataset.dataSourceId;
+                                    showDeleteSourceConfirmation(idToDelete);
+                                });
+
+                                listItem.appendChild(textSpan);
+                                listItem.appendChild(deleteBtn);
+                                if (dataSource.id === activeDataSourceId) listItem.classList.add('active');
+                                
+                                dataSourceList.appendChild(listItem);
+                            });
+                        }
+            
+                        function showDeleteConfirmation(dataSourceId, index) {
+                            deletePayload = { dataSourceId, index };
+                            confirmDeleteModal.style.display = 'flex';
+                        }
+            
+                        function hideDeleteConfirmation() {
+                            deletePayload = null;
+                            confirmDeleteModal.style.display = 'none';
+                        }
+
+                        function showDeleteSourceConfirmation(dataSourceId) {
+                            deleteSourcePayload = { dataSourceId };
+                            confirmDeleteSourceModal.style.display = 'flex';
+                        }
+
+                        function hideDeleteSourceConfirmation() {
+                            deleteSourcePayload = null;
+                            confirmDeleteSourceModal.style.display = 'none';
+                        }
+
+                        function showDeleteAnalysisConfirmation(dataSourceId, analysisId) {
+                            deleteAnalysisPayload = { dataSourceId, analysisId };
+                            confirmDeleteAnalysisModal.style.display = 'flex';
+                        }
+
+                        function hideDeleteAnalysisConfirmation() {
+                            deleteAnalysisPayload = null;
+                            confirmDeleteAnalysisModal.style.display = 'none';
+                        }
+
+                        function showDeleteTransformConfirmation(dataSourceId, transformId) {
+                            deleteTransformPayload = { dataSourceId, transformId };
+                            confirmDeleteTransformModal.style.display = 'flex';
+                        }
+
+                        function hideDeleteTransformConfirmation() {
+                            deleteTransformPayload = null;
+                            confirmDeleteTransformModal.style.display = 'none';
+                        }
+            
+                        function showModifyModal(dataSourceId, visualizationId, isError = false, errorMessage = '', errorCode = '') {
+                            modifyPayload = { dataSourceId, visualizationId };
+                            const visualization = dataSources[dataSourceId].visualizations.find(v => v.id === visualizationId);
+                            existingCodeTextarea.value = errorCode || (visualization ? visualization.generatedCode : '');
+                            modificationInstructionInput.value = '';
+                            
+                            const errorDiv = document.getElementById('modify-plot-error-message');
+                            const instructionInput = document.getElementById('modification-instruction-input');
+                            const instructionBtn = document.getElementById('modify-with-instruction-btn');
+
+                            if (isError) {
+                                errorDiv.textContent = errorMessage;
+                                errorDiv.style.display = 'block';
+                            } else {
+                                errorDiv.style.display = 'none';
+                            }
+
+                            modifyPlotModal.style.display = 'flex';
+                        }
+            
+                        function hideModifyModal() {
+                            modifyPayload = null;
+                            modifyPlotModal.style.display = 'none';
+                        }
+
+                        function showModifyAnalysisModal(dataSourceId, analysisId, isError = false, errorMessage = '', errorCode = '') {
+                            modifyAnalysisPayload = { dataSourceId, analysisId };
+                            const analysis = dataSources[dataSourceId].analyses.find(a => a.id === analysisId);
+                            existingAnalysisCodeTextarea.value = errorCode || analysis.generatedCode;
+                            analysisModificationInstructionInput.value = '';
+
+                            const errorDiv = document.getElementById('modify-analysis-error-message');
+                            const instructionInput = document.getElementById('analysis-modification-instruction-input');
+                            const instructionBtn = document.getElementById('modify-analysis-with-instruction-btn');
+
+                            if (isError) {
+                                errorDiv.textContent = errorMessage;
+                                errorDiv.style.display = 'block';
+                            } else {
+                                errorDiv.style.display = 'none';   
+                            }
+
+                            modifyAnalysisModal.style.display = 'flex';
+                        }
+
+                        function hideModifyAnalysisModal() {
+                            modifyAnalysisPayload = null;
+                            modifyAnalysisModal.style.display = 'none';
+                        }
+
+                        function showModifyTransformModal(dataSourceId, transformId, isError = false, errorMessage = '', errorCode = '') {
+                            modifyTransformPayload = { dataSourceId, transformId };
+                            const transform = dataSources[dataSourceId].transforms.find(t => t.id === transformId);
+                            existingTransformCodeTextarea.value = errorCode || (transform ? transform.generatedCode : '');
+                            transformModificationInstructionInput.value = '';
+
+                            const errorDiv = document.getElementById('modify-transform-error-message');
+                            const instructionInput = document.getElementById('transform-modification-instruction-input');
+                            const instructionBtn = document.getElementById('modify-transform-with-instruction-btn');
+
+                            if (isError) {
+                                errorDiv.textContent = errorMessage;
+                                errorDiv.style.display = 'block';
+                            } else {
+                                errorDiv.style.display = 'none';
+                            }
+                            // Always display instruction input and button
+                            instructionInput.parentElement.style.display = 'block';
+                            instructionBtn.style.display = 'inline-block';
+
+                            modifyTransformModal.style.display = 'flex';
+                        }
+
+                        function hideModifyTransformModal() {
+                            modifyTransformPayload = null;
+                            modifyTransformModal.style.display = 'none';
+                        }
+
+                        function showNewTransformModal(dataSourceId, transformId) {
+                            newTransformPayload = { dataSourceId, transformId };
+                            newTransformInstructionInput.value = '';
+                            newTransformModal.style.display = 'flex';
+                        }
+
+                        function hideNewTransformModal() {
+                            newTransformPayload = null;
+                            newTransformModal.style.display = 'none';
+                        }
+
+                        function showAnalysisFromTransformModal(dataSourceId, transformId) {
+                            newAnalysisPayload = { dataSourceId, transformId };
+                            newAnalysisInstructionInput.value = '';
+                            analysisFromTransformModal.style.display = 'flex';
+                        }
+
+                        function hideAnalysisFromTransformModal() {
+                            newAnalysisPayload = null;
+                            analysisFromTransformModal.style.display = 'none';
+                        }
+
+                        function showPlotFromTransformModal(dataSourceId, transformId) {
+                            newPlotPayload = { dataSourceId, transformId };
+                            newPlotInstructionInput.value = '';
+                            plotFromTransformModal.style.display = 'flex';
+                        }
+
+                        function hidePlotFromTransformModal() {
+                            newPlotPayload = null;
+                            plotFromTransformModal.style.display = 'none';
+                        }
+            
+                        async function performModification() {
+                            if (!modifyPayload) return;
+                            const { dataSourceId, visualizationId } = modifyPayload;
+                            const instruction = modificationInstructionInput.value;
+                            const existingCode = existingCodeTextarea.value;
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please enter an instruction.');
+                                return;
+                            }
+            
+                            showLoader();
+                            hideModifyModal();
+            
+                            try {
+                                const visIndex = dataSources[dataSourceId].visualizations.findIndex(v => v.id === visualizationId);
+                                if (visIndex === -1) {
+                                    throw new Error('Visualization not found');
+                                }
+
+                                const modifiedVisualization = await window.api.modifyPlot(dataSourceId, visualizationId, existingCode, instruction);
+                                
+                                if (modifiedVisualization && modifiedVisualization.__pyError) {
+                                    showModifyModal(dataSourceId, visualizationId, true, modifiedVisualization.message, modifiedVisualization.code);
+                                } else {
+                                    dataSources[dataSourceId].visualizations[visIndex] = modifiedVisualization;
+                
+                                    const visualizationsContainer = document.getElementById(`visualizations-container-${dataSourceId}`);
+                                    visualizationsContainer.innerHTML = '';
+                                    for (let i = dataSources[dataSourceId].visualizations.length - 1; i >= 0; i--) {
+                                        renderVisualization(visualizationsContainer, dataSources[dataSourceId].visualizations[i], i);
+                                    }
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('System Error', `An unexpected error occurred: ${error.message}`);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performDirectCodeExecution() {
+                            if (!modifyPayload) return;
+                            const { dataSourceId, visualizationId } = modifyPayload;
+                            const modifiedCode = existingCodeTextarea.value;
+                            if (!modifiedCode) {
+                                window.api.showErrorDialog('Missing Input', 'Please provide code to execute.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideModifyModal();
+
+                            try {
+                                const result = await window.api.runModifiedCode(dataSourceId, visualizationId, modifiedCode);
+                                if (result && result.__pyError) {
+                                    showModifyModal(dataSourceId, visualizationId, true, result.message, result.code);
+                                } else {
+                                    const visIndex = dataSources[dataSourceId].visualizations.findIndex(v => v.id === visualizationId);
+                                    if (visIndex > -1) {
+                                        dataSources[dataSourceId].visualizations[visIndex] = result;
+                                    }
+
+                                    const visualizationsContainer = document.getElementById(`visualizations-container-${dataSourceId}`);
+                                    visualizationsContainer.innerHTML = '';
+                                    for (let i = dataSources[dataSourceId].visualizations.length - 1; i >= 0; i--) {
+                                        renderVisualization(visualizationsContainer, dataSources[dataSourceId].visualizations[i], i);
+                                    }
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('System Error', `An unexpected error occurred: ${error.message}`);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+            
+                        async function performDelete() {
+                            if (!deletePayload) return;
+                            const { dataSourceId, index } = deletePayload;
+                            
+                            try {
+                                const indexToDelete = parseInt(index, 10);
+                                dataSources[dataSourceId].visualizations.splice(indexToDelete, 1);
+                                await window.api.deleteVisualization(dataSourceId, indexToDelete);
+            
+                                const visualizationsContainer = document.getElementById(`visualizations-container-${dataSourceId}`);
+                                visualizationsContainer.innerHTML = '';
+                                for (let i = dataSources[dataSourceId].visualizations.length - 1; i >= 0; i--) {
+                                    renderVisualization(visualizationsContainer, dataSources[dataSourceId].visualizations[i], i);
+                                }
+                            } catch (error) {
+                                console.error('Failed to delete visualization:', error);
+                                window.api.showErrorDialog('Delete Error', 'An error occurred while deleting the visualization.');
+                            } finally {
+                                hideDeleteConfirmation();
+                            }
+                        }
+
+                        async function performSourceDelete() {
+                            if (!deleteSourcePayload) return;
+                            const { dataSourceId } = deleteSourcePayload;
+                            
+                            try {
+                                const result = await window.api.deleteDataSource(dataSourceId, activeDataSourceId);
+                                if (result.success) {
+                                    delete dataSources[dataSourceId];
+                
+                                    const tab = document.getElementById(`tab-${dataSourceId}`);
+                                    const tabContent = document.getElementById(`tab-content-${dataSourceId}`);
+                                    if (tab) tab.remove();
+                                    if (tabContent) tabContent.remove();
+                
+                                    updateDataSourceList();
+                
+                                    if (result.nextTabId) {
+                                        activeDataSourceId = result.nextTabId;
+                                        switchTab(activeDataSourceId);
+                                    } else {
+                                        activeDataSourceId = null;
+                                        welcomeContainer.style.display = 'flex';
+                                        tabContainer.style.display = 'none';
+                                        tabContentContainer.style.display = 'none';
+                                    }
+                                } else {
+                                    throw new Error(result.error);
+                                }
+                            } catch (error) {
+                                console.error('Failed to delete data source:', error);
+                                window.api.showErrorDialog('Delete Error', 'An error occurred while deleting the data source.');
+                            } finally {
+                                hideDeleteSourceConfirmation();
+                            }
+                        }
+            
+                        confirmDeleteBtn.addEventListener('click', performDelete);
+                        cancelDeleteBtn.addEventListener('click', hideDeleteConfirmation);
+                        confirmModalCloseBtn.addEventListener('click', hideDeleteConfirmation);
+
+                        confirmDeleteSourceBtn.addEventListener('click', performSourceDelete);
+                        cancelDeleteSourceBtn.addEventListener('click', hideDeleteSourceConfirmation);
+                        confirmSourceModalCloseBtn.addEventListener('click', hideDeleteSourceConfirmation);
+
+                        confirmDeleteAnalysisBtn.addEventListener('click', performAnalysisDelete);
+                        cancelDeleteAnalysisBtn.addEventListener('click', hideDeleteAnalysisConfirmation);
+                        confirmAnalysisModalCloseBtn.addEventListener('click', hideDeleteAnalysisConfirmation);
+
+                        confirmDeleteTransformBtn.addEventListener('click', performTransformDelete);
+                        cancelDeleteTransformBtn.addEventListener('click', hideDeleteTransformConfirmation);
+                        confirmTransformModalCloseBtn.addEventListener('click', hideDeleteTransformConfirmation);
+
+                        modifyWithInstructionBtn.addEventListener('click', performModification);
+                        modifyWithCodeBtn.addEventListener('click', performDirectCodeExecution);
+                        cancelModifyBtn.addEventListener('click', hideModifyModal);
+                        modifyAnalysisWithInstructionBtn.addEventListener('click', performAnalysisModification);
+                        modifyAnalysisWithCodeBtn.addEventListener('click', performDirectAnalysisCodeExecution);
+                        cancelModifyAnalysisBtn.addEventListener('click', hideModifyAnalysisModal);
+                        modifyTransformWithInstructionBtn.addEventListener('click', performTransformModification);
+                        modifyTransformWithCodeBtn.addEventListener('click', performDirectTransformCodeExecution);
+                        cancelModifyTransformBtn.addEventListener('click', hideModifyTransformModal);
+                        createNewTransformBtn.addEventListener('click', performNewTransform);
+                        cancelNewTransformBtn.addEventListener('click', hideNewTransformModal);
+                        createNewAnalysisBtn.addEventListener('click', performNewAnalysisFromTransform);
+                        cancelNewAnalysisBtn.addEventListener('click', hideAnalysisFromTransformModal);
+                        createNewPlotBtn.addEventListener('click', performNewPlotFromTransform);
+                        cancelNewPlotBtn.addEventListener('click', hidePlotFromTransformModal);
+
+                        async function performAnalysisDelete() {
+                            if (!deleteAnalysisPayload) return;
+                            const { dataSourceId, analysisId } = deleteAnalysisPayload;
+                            
+                            try {
+                                const analysisIndex = dataSources[dataSourceId].analyses.findIndex(a => a.id === analysisId);
+                                if (analysisIndex > -1) {
+                                    dataSources[dataSourceId].analyses.splice(analysisIndex, 1);
+                                    await window.api.deleteAnalysis(dataSourceId, analysisId);
+                
+                                    const analysisResultsContainer = document.getElementById(`analysis-results-container-${dataSourceId}`);
+                                    analysisResultsContainer.innerHTML = '';
+                                    // Re-render remaining analyses
+                                    dataSources[dataSourceId].analyses.forEach(analysis => {
+                                        renderAnalysisPanel(analysisResultsContainer, analysis);
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('Failed to delete analysis:', error);
+                                window.api.showErrorDialog('Delete Error', 'An error occurred while deleting the analysis.');
+                            } finally {
+                                hideDeleteAnalysisConfirmation();
+                            }
+                        }
+
+                        async function performTransformDelete() {
+                            if (!deleteTransformPayload) return;
+                            const { dataSourceId, transformId } = deleteTransformPayload;
+                            
+                            try {
+                                const transformIndex = dataSources[dataSourceId].transforms.findIndex(t => t.id === transformId);
+                                if (transformIndex > -1) {
+                                    dataSources[dataSourceId].transforms.splice(transformIndex, 1);
+                                    await window.api.deleteTransform(dataSourceId, transformId);
+                
+                                    const transformResultsContainer = document.getElementById(`transform-results-container-${dataSourceId}`);
+                                    transformResultsContainer.innerHTML = '';
+                                    // Re-render remaining transforms
+                                    dataSources[dataSourceId].transforms.forEach(transform => {
+                                        renderTransformPanel(transformResultsContainer, transform);
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('Failed to delete transform:', error);
+                                window.api.showErrorDialog('Delete Error', 'An error occurred while deleting the transform.');
+                            } finally {
+                                hideDeleteTransformConfirmation();
+                            }
+                        }
+
+                        async function performAnalysisModification() {
+                            if (!modifyAnalysisPayload) return;
+                            const { dataSourceId, analysisId } = modifyAnalysisPayload;
+                            const instruction = analysisModificationInstructionInput.value;
+                            const existingCode = existingAnalysisCodeTextarea.value;
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please enter an instruction.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideModifyAnalysisModal();
+
+                            try {
+                                const modifiedAnalysis = await window.api.modifyAnalysis(dataSourceId, analysisId, existingCode, instruction);
+                                const analysisIndex = dataSources[dataSourceId].analyses.findIndex(a => a.id === analysisId);
+                                if (analysisIndex > -1) {
+                                    dataSources[dataSourceId].analyses[analysisIndex] = modifiedAnalysis;
+                                }
+
+                                const analysisResultsContainer = document.getElementById(`analysis-results-container-${dataSourceId}`);
+                                analysisResultsContainer.innerHTML = '';
+                                dataSources[dataSourceId].analyses.forEach(analysis => {
+                                    renderAnalysisPanel(analysisResultsContainer, analysis);
+                                });
+                            } catch (error) {
+                                handleCodeGenerationError(error, 'analysis', dataSourceId, instruction);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performTransformModification() {
+                            if (!modifyTransformPayload) return;
+                            const { dataSourceId, transformId } = modifyTransformPayload;
+                            const instruction = transformModificationInstructionInput.value;
+                            const existingCode = existingTransformCodeTextarea.value;
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please enter an instruction.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideModifyTransformModal();
+
+                            try {
+                                const modifiedTransform = await window.api.modifyTransform(dataSourceId, transformId, existingCode, instruction);
+                                if (modifiedTransform && modifiedTransform.__pyError) {
+                                    showModifyTransformModal(dataSourceId, transformId, true, modifiedTransform.message, modifiedTransform.code);
+                                } else {
+                                    const transformIndex = dataSources[dataSourceId].transforms.findIndex(t => t.id === transformId);
+                                    if (transformIndex > -1) {
+                                        dataSources[dataSourceId].transforms[transformIndex] = modifiedTransform;
+                                    }
+
+                                    const transformResultsContainer = document.getElementById(`transform-results-container-${dataSourceId}`);
+                                    transformResultsContainer.innerHTML = '';
+                                    dataSources[dataSourceId].transforms.forEach(transform => {
+                                        renderTransformPanel(transformResultsContainer, transform);
+                                    });
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('System Error', `An unexpected error occurred: ${error.message}`);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performDirectAnalysisCodeExecution() {
+                            if (!modifyAnalysisPayload) return;
+                            const { dataSourceId, analysisId } = modifyAnalysisPayload;
+                            const modifiedCode = existingAnalysisCodeTextarea.value;
+                            if (!modifiedCode) {
+                                window.api.showErrorDialog('Missing Input', 'Please provide code to execute.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideModifyAnalysisModal();
+
+                            try {
+                                const result = await window.api.runModifiedAnalysisCode(dataSourceId, analysisId, modifiedCode);
+                                
+                                if (result && result.__pyError) {
+                                    showModifyAnalysisModal(dataSourceId, analysisId, true, result.message, result.code);
+                                } else {
+                                    const analysisIndex = dataSources[dataSourceId].analyses.findIndex(a => a.id === analysisId);
+                                    if (analysisIndex > -1) {
+                                        dataSources[dataSourceId].analyses[analysisIndex] = result;
+                                    }
+
+                                    const analysisResultsContainer = document.getElementById(`analysis-results-container-${dataSourceId}`);
+                                    analysisResultsContainer.innerHTML = '';
+                                    dataSources[dataSourceId].analyses.forEach(analysis => {
+                                        renderAnalysisPanel(analysisResultsContainer, analysis);
+                                    });
+                                }
+                            } catch (error) {
+                                // console.log(`[DEBUG] Caught error in performDirectAnalysisCodeExecution:`, error);
+                                // This will now only catch system-level errors
+                                window.api.showErrorDialog('System Error', `An unexpected error occurred: ${error.message}`);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performDirectTransformCodeExecution() {
+                            if (!modifyTransformPayload) return;
+                            const { dataSourceId, transformId } = modifyTransformPayload;
+                            const modifiedCode = existingTransformCodeTextarea.value;
+                            if (!modifiedCode) {
+                                window.api.showErrorDialog('Missing Input', 'Please provide code to execute.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideModifyTransformModal();
+
+                            try {
+                                const result = await window.api.runModifiedTransformCode(dataSourceId, transformId, modifiedCode);
+                                if (result && result.__pyError) {
+                                    showModifyTransformModal(dataSourceId, transformId, true, result.message, result.code);
+                                } else {
+                                    const transformIndex = dataSources[dataSourceId].transforms.findIndex(t => t.id === transformId);
+                                    if (transformIndex > -1) {
+                                        dataSources[dataSourceId].transforms[transformIndex] = result;
+                                        // console.log(`DEBUG in analyze after adding: ${JSON.stringify(dataSources[dataSourceId].transforms[transformIndex])}`);
+                                    }
+                                    
+
+                                    const transformResultsContainer = document.getElementById(`transform-results-container-${dataSourceId}`);
+                                    transformResultsContainer.innerHTML = '';
+                                    dataSources[dataSourceId].transforms.forEach(transform => {
+                                        renderTransformPanel(transformResultsContainer, transform);
+                                    });
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('System Error', `An unexpected error occurred: ${error.message}`);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performNewTransform() {
+                            if (!newTransformPayload) return;
+                            const { dataSourceId, transformId } = newTransformPayload;
+                            const instruction = newTransformInstructionInput.value;
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please enter an instruction.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideNewTransformModal();
+
+                            try {
+                                const newTransform = await window.api.newTransform(dataSourceId, transformId, instruction);
+                                
+                                if (!dataSources[dataSourceId].transforms) {
+                                    dataSources[dataSourceId].transforms = [];
+                                }
+                                dataSources[dataSourceId].transforms.unshift(newTransform);
+                                
+                                // Prepend the new transform to the container
+                                const transformResultsContainer = document.getElementById(`transform-results-container-${dataSourceId}`);
+                                const newTransformElement = renderTransformPanel(null, newTransform); // Create the element
+                                transformResultsContainer.prepend(newTransformElement); // Prepend it
+
+                                if (newTransform && newTransform.__pyError) {
+                                    // If it's an error, show the modify modal with error details
+                                    showModifyTransformModal(dataSourceId, newTransform.id, true, newTransform.message, newTransform.code);
+                                } else {
+                                    // Success: Update the preview data in the main state
+                                    dataSources[dataSourceId].previewData = newTransform.previewData;
+
+                                    // Re-render the preview table
+                                    const table = '<table><thead><tr>' +
+                                        newTransform.previewData.columns.map(col => `<th>${col}</th>`).join('') +
+                                        '</tr></thead><tbody>' +
+                                        newTransform.previewData.rows.map(row => '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>').join('') +
+                                        '</tbody></table>';
+                                    
+                                    const wrapper = document.querySelector(`#tab-content-${dataSourceId} .preview-table-wrapper`);
+                                    wrapper.innerHTML = table;
+                                }
+                                
+                                newTransformInstructionInput.value = '';
+
+                            } catch (error) {
+                                window.api.showErrorDialog('Error Performing New Transform', error.message);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performNewAnalysisFromTransform() {
+                            if (!newAnalysisPayload) return;
+                            const { dataSourceId, transformId } = newAnalysisPayload;
+                            const instruction = newAnalysisInstructionInput.value;
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please enter an instruction.');
+                                return;
+                            }
+
+                            showLoader();
+                            hideAnalysisFromTransformModal();
+
+                            try {
+                                const newAnalysis = await window.api.analyze(dataSourceId, instruction, transformId);
+                                
+                                if (!dataSources[dataSourceId].analyses) {
+                                    dataSources[dataSourceId].analyses = [];
+                                }
+                                dataSources[dataSourceId].analyses.unshift(newAnalysis);
+                                
+                                const analysisResultsContainer = document.getElementById(`analysis-results-container-${dataSourceId}`);
+                                const newAnalysisElement = renderAnalysisPanel(null, newAnalysis);
+                                analysisResultsContainer.prepend(newAnalysisElement);
+                                
+                                newAnalysisInstructionInput.value = '';
+
+                                if (newAnalysis && newAnalysis.__pyError) {
+                                    showModifyAnalysisModal(dataSourceId, newAnalysis.id, true, newAnalysis.message, newAnalysis.code);
+                                }
+                                
+                                // Switch to the analysis tab
+                                switchInnerTab(dataSourceId, 'analysis');
+
+                            } catch (error) {
+                                window.api.showErrorDialog('Error Performing New Analysis', error.message);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+
+                        async function performNewPlotFromTransform() {
+                            if (!newPlotPayload) return;
+                            const { dataSourceId, transformId } = newPlotPayload;
+                            const instruction = newPlotInstructionInput.value;
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please enter an instruction.');
+                                return;
+                            }
+
+                            showLoader();
+                            hidePlotFromTransformModal();
+
+                            try {
+                                const result = await window.api.generatePlot(dataSourceId, instruction, transformId);
+                                
+                                if (!dataSources[dataSourceId].visualizations) {
+                                    dataSources[dataSourceId].visualizations = [];
+                                }
+                                dataSources[dataSourceId].visualizations.unshift(result);
+                                
+                                const visualizationsContainer = document.getElementById(`visualizations-container-${dataSourceId}`);
+                                renderVisualization(visualizationsContainer, result, 0);
+                                newPlotInstructionInput.value = '';
+
+                                if (result && result.__pyError) {
+                                    showModifyModal(dataSourceId, result.id, true, result.message, result.code);
+                                }
+                                
+                                // Switch to the visualization tab
+                                switchInnerTab(dataSourceId, 'visualization');
+
+                            } catch (error) {
+                                window.api.showErrorDialog('Error Performing New Plot', error.message);
+                            } finally {
+                                hideLoader();
+                            }
+                        }
+            
+                        function renderVisualization(container, visualization, index) {
+                            const { id, command, plotData, __pyError, message, code, transformId } = visualization;
+                            const visItem = document.createElement('div');
+                            visItem.className = 'visualization-item';
+                            
+                            let contentHtml = '';
+                            if (__pyError) {
+                                contentHtml = `
+                                    <div style="color: #c00; background-color: #fdd; padding: 10px; border-radius: 5px;">
+                                        <strong>Error generating plot for:</strong> "${command}"
+                                        <p style="margin-top: 5px;">${message}</p>
+                                    </div>
+                                    <pre style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; white-space: pre-wrap; margin-top: 10px;">Generated Code:\n${code}</pre>
+                                `;
+                            } else {
+                                contentHtml = `<img src="data:image/png;base64,${plotData}" style="max-width: 100%; border: 1px solid var(--border-color); border-radius: var(--border-radius);" />`;
+                            }
+
+                            visItem.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <textarea class="item-name-input" rows="1" wrap="soft" placeholder="Enter name" 
+                                        style="font-size: 16px; font-weight: bold; border: none; background: transparent; width: 80%; overflow-y: auto; resize: none; transition: height 0.2s ease-out;"
+                                        data-item-id="${id}" data-item-type="visualizations">${visualization.name || command}</textarea>
+                                    <div>
+                                        <button class="modify-vis-btn" data-vis-id="${id}" title="Modify Visualization">&#9998;</button>
+                                        <button class="delete-vis-btn" data-vis-id="${id}" title="Delete Visualization">&times;</button>
+                                    </div>
+                                </div>
+                            `;
+                            container.prepend(visItem);
+                            appendTransformLink(transformId, visItem);
+                            const contentDiv = document.createElement('div');
+                            contentDiv.innerHTML = contentHtml;
+                            visItem.appendChild(contentDiv);
+            
+                            visItem.querySelector('.delete-vis-btn').addEventListener('click', (e) => {
+                                const visId = e.currentTarget.dataset.visId;
+                                const visIndex = dataSources[activeDataSourceId].visualizations.findIndex(v => v.id === visId);
+                                if (visIndex > -1) {
+                                    showDeleteConfirmation(activeDataSourceId, visIndex);
+                                }
+                            });
+            
+                            visItem.querySelector('.modify-vis-btn').addEventListener('click', (e) => {
+                                const visId = e.currentTarget.dataset.visId;
+                                if (__pyError) {
+                                    showModifyModal(activeDataSourceId, visId, true, message, code);
+                                } else {
+                                    showModifyModal(activeDataSourceId, visId);
+                                }
+                            });
+
+                            const img = visItem.querySelector('img');
+                            if (img) {
+                                img.addEventListener('contextmenu', (e) => {
+                                    e.preventDefault();
+                                    window.api.showPlotContextMenu(e.target.src);
+                                });
+                            }
+
+                            const nameInput = visItem.querySelector('.item-name-input');
+                            nameInput.addEventListener('change', (e) => {
+                                const newName = e.target.value;
+                                const itemId = e.target.dataset.itemId;
+                                const itemType = e.target.dataset.itemType;
+                                window.api.updateItemName(activeDataSourceId, itemId, itemType, newName);
+                            });
+                            setTimeout(() => autoAdjustTextareaHeight(nameInput), 0);
+                        }
+            
+                        function createTabForDataSource(dataSource) {
+                            const { id, name, previewData, visualizations } = dataSource;
+                            // console.log(`In createtabfordatasource ${previewData.columns}`);
+            
+                            const tab = document.createElement('div');
+                            tab.className = 'tab';
+                            tab.dataset.dataSourceId = id;
+                            tab.id = `tab-${id}`; // Add unique ID
+                            tab.innerHTML = `
+                                <span style="flex-grow: 1;">${name}</span>
+                            `;
+                            tab.addEventListener('click', () => {
+                                switchTab(id);
+                            });
+                            tabContainer.appendChild(tab);
+            
+                            const tabContent = document.createElement('div');
+                            tabContent.className = 'tab-content';
+                            tabContent.dataset.dataSourceId = id;
+                            tabContent.id = `tab-content-${id}`; // Add unique ID
+                            
+                            const table = '<table style="width: auto; min-width: 100%;"><thead><tr>' +
+                                previewData.columns.map(col => `<th>${col}</th>`).join('') +
+                                '</tr></thead><tbody>' +
+                                previewData.rows.map(row => '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>').join('') +
+                                '</tbody></table>';
+            
+                            tabContent.innerHTML = `
+                                <div class="preview-table-wrapper">
+                                    ${table}
+                                </div>
+                                <div style="text-align: right; padding: 10px 0;">
+                                    <button id="refresh-ds-${id}" title="Refresh Data Source" class="btn" style="background-color: #777;">Refresh Data</button>
+                                </div>
+                                <div class="inner-tab-container">
+                                    <div class="inner-tab active" onclick="switchInnerTab('${id}', 'visualization')">Visualization</div>
+                                    <div class="inner-tab" onclick="switchInnerTab('${id}', 'analysis')">Analysis</div>
+                                    <div class="inner-tab" onclick="switchInnerTab('${id}', 'transform')">Transform</div>
+                                    <div class="inner-tab" onclick="switchInnerTab('${id}', 'info')">Info</div>
+                                </div>
+                                <div id="visualization-content-${id}" class="inner-tab-content active">
+                                    <div class="card">
+                                        <h2>Generate Visualization</h2>
+                                        <input type="text" id="nlp-command-input-${id}" placeholder="e.g., plot sales by month">
+                                        <button id="generate-plot-btn-${id}">Generate Plot</button>
+                                        <hr style="margin: 20px 0; border-color: var(--border-color);">
+                                        <div id="visualizations-container-${id}"></div>
+                                    </div>
+                                </div>
+                                <div id="analysis-content-${id}" class="inner-tab-content">
+                                    <div class="card">
+                                        <h2>Perform Analysis</h2>
+                                        <input type="text" id="analysis-command-input-${id}" placeholder="e.g., show summary statistics">
+                                        <button id="analyze-btn-${id}">Analyze</button>
+                                        <hr style="margin: 20px 0; border-color: var(--border-color);">
+                                        <div id="analysis-results-container-${id}"></div>
+                                    </div>
+                                </div>
+                                <div id="transform-content-${id}" class="inner-tab-content">
+                                    <div class="card">
+                                        <h2>Transform Data</h2>
+                                        <input type="text" id="transform-command-input-${id}" placeholder="e.g., convert column 'A' to uppercase">
+                                        <button id="transform-btn-${id}">Transform</button>
+                                        <hr style="margin: 20px 0; border-color: var(--border-color);">
+                                        <div id="transform-results-container-${id}"></div>
+                                    </div>
+                                </div>
+                                <div id="info-content-${id}" class="inner-tab-content">
+                                    <div class="card">
+                                        <h2>Data Source Information</h2>
+                                        <table id="info-table-${id}">
+                                            <!-- Info will be populated here -->
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                            tabContentContainer.appendChild(tabContent);
+
+                            const infoTable = document.getElementById(`info-table-${id}`);
+                            
+                            let configHtml = '<table>';
+                            let i = 0;
+                            for (const [key, value] of Object.entries(dataSource.config)) {
+                                if (key === 'sources' && dataSource.type === 'derived') {
+                                    // Ensure value is a string before splitting
+                                    const sourcesString = Array.isArray(value) ? value.join(',') : value;
+                                    const sourcesList = sourcesString.split(',').map(s => s.trim());
+                                    let sourcesListHtml = '<ul style="margin: 0; padding-left: 20px;">';
+                                    for (const source of sourcesList) {
+                                        let itemHtml = '';
+                                        if (source.startsWith('ds:')) {
+                                            const sourceId = source.substring(3);
+                                            const sourceDs = dataSources[sourceId];
+                                            itemHtml = sourceDs 
+                                                ? `<a href="#" data-ds-id="${sourceId}">${sourceDs.name}</a>`
+                                                : `Data source ${sourceId} (not found)`;
+                                        } else if (source.startsWith('tr:')) {
+                                            const parts = source.split(':');
+                                            const sourceDsId = parts[1];
+                                            const transformId = parts[2];
+                                            const sourceDs = dataSources[sourceDsId];
+                                            const transform = sourceDs ? sourceDs.transforms.find(t => t.id === transformId) : null;
+                                            // console.log(`ds: ${sourceDs.id},  ts: ${transformId}, ts-print: ${JSON.stringify(transform)}`);
+                                            itemHtml = (sourceDs && transform)
+                                                ? `<a href="#" data-ds-id="${sourceDsId}">${sourceDs.name}</a> &gt; <a href="#" data-ds-id="${sourceDsId}" data-transform-id="${transformId}">${transform.name || transform.command}</a>`
+                                                : `Transform ${transformId} (not found)`;
+                                        } else {
+                                            itemHtml = source;
+                                        }
+                                        sourcesListHtml += `<li>df${i}: ${itemHtml}</li>`;
+                                        i += 1;
+                                    }
+                                    sourcesListHtml += '</ul>';
+                                    configHtml += `<tr><td><em>${key}:</em></td><td>${sourcesListHtml}</td></tr>`;
+                                } else {
+                                    configHtml += `<tr><td><em>${key}:</em></td><td>${value}</td></tr>`;
+                                }
+                            }
+                            configHtml += '</table>';
+
+                            infoTable.innerHTML = `
+                                <tr><td><strong>ID:</strong></td><td>${dataSource.id}</td></tr>
+                                <tr><td><strong>Name:</strong></td><td>${dataSource.name}</td></tr>
+                                <tr><td><strong>Type:</strong></td><td>${dataSource.type}</td></tr>
+                                <tr><td><strong>Created:</strong></td><td>${new Date(dataSource.createdAt).toLocaleString()}</td></tr>
+                                <tr><td style="vertical-align: top;"><strong>Config:</strong></td><td>${configHtml}</td></tr>
+                            `;
+
+                            infoTable.querySelectorAll('a[data-ds-id]').forEach(link => {
+                                link.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    const targetDsId = e.currentTarget.dataset.dsId;
+                                    const targetTransformId = e.currentTarget.dataset.transformId;
+
+                                    if (activeDataSourceId !== targetDsId) {
+                                        switchTab(targetDsId);
+                                    }
+
+                                    if (targetTransformId) {
+                                        switchInnerTab(targetDsId, 'transform');
+                                        requestAnimationFrame(() => {
+                                            const transformElement = document.getElementById(`transform-item-${targetTransformId}`);
+                                            if (transformElement) {
+                                                transformElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                transformElement.style.transition = 'background-color 0.5s ease';
+                                                transformElement.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
+                                                setTimeout(() => {
+                                                    transformElement.style.backgroundColor = '';
+                                                }, 2000);
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+            
+                            const refreshBtn = document.getElementById(`refresh-ds-${id}`);
+                            refreshBtn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                showLoader();
+                                try {
+                                    const newPreviewData = await window.api.refreshDataSource(id);
+                                    dataSources[id].previewData = newPreviewData;
+                                    
+                                    // Re-render the preview table
+                                    const table = '<table><thead><tr>' +
+                                        newPreviewData.columns.map(col => `<th>${col}</th>`).join('') +
+                                        '</tr></thead><tbody>' +
+                                        newPreviewData.rows.map(row => '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>').join('') +
+                                        '</tbody></table>';
+                                    
+                                    const wrapper = tabContent.querySelector('.preview-table-wrapper');
+                                    wrapper.innerHTML = table;
+
+                                } catch (error) {
+                                    window.api.showErrorDialog('Error Refreshing Data Source', error.message);
+                                } finally {
+                                    hideLoader();
+                                }
+                            });
+
+                            const visualizationsContainer = document.getElementById(`visualizations-container-${id}`);
+                            if (visualizations && visualizations.length > 0) {
+                                for (let i = visualizations.length - 1; i >= 0; i--) {
+                                    renderVisualization(visualizationsContainer, visualizations[i], i);
+                                }
+                            }
+            
+                            const generatePlotBtn = document.getElementById(`generate-plot-btn-${id}`);
+                            const nlpCommandInput = document.getElementById(`nlp-command-input-${id}`);
+                            const analyzeBtn = document.getElementById(`analyze-btn-${id}`);
+                            const analysisCommandInput = document.getElementById(`analysis-command-input-${id}`);
+                            const analysisResultsContainer = document.getElementById(`analysis-results-container-${id}`);
+                            const transformBtn = document.getElementById(`transform-btn-${id}`);
+                            const transformCommandInput = document.getElementById(`transform-command-input-${id}`);
+                            const transformResultsContainer = document.getElementById(`transform-results-container-${id}`);
+
+                            if (dataSource.transforms && dataSource.transforms.length > 0) {
+                                dataSource.transforms.forEach(transform => {
+                                    renderTransformPanel(transformResultsContainer, transform);
+                                });
+                            }
+
+                            if (dataSource.analyses && dataSource.analyses.length > 0) {
+                                dataSource.analyses.forEach(analysis => {
+                                    renderAnalysisPanel(analysisResultsContainer, analysis);
+                                });
+                            }
+
+                            transformBtn.addEventListener('click', async () => {
+                                const command = transformCommandInput.value;
+                                if (!command || !activeDataSourceId) {
+                                    window.api.showErrorDialog('Missing Input', 'Please select a data source and enter a command.');
+                                    return;
+                                }
+
+                                transformBtn.disabled = true;
+                                transformBtn.textContent = 'Transforming...';
+
+                                try {
+                                    const newTransform = await window.api.transform(activeDataSourceId, command);
+                                    
+                                    if (!dataSources[activeDataSourceId].transforms) {
+                                        dataSources[activeDataSourceId].transforms = [];
+                                    }
+                                    dataSources[activeDataSourceId].transforms.unshift(newTransform);
+                                    
+                                    if (newTransform && newTransform.__pyError) {
+                                        // Render the error panel, but don't update the main preview
+                                        const newTransformElement = renderTransformPanel(null, newTransform);
+                                        transformResultsContainer.prepend(newTransformElement);
+                                        showModifyTransformModal(activeDataSourceId, newTransform.id, true, newTransform.message, newTransform.code);
+                                    } else {
+                                        // Success: Update preview data and render panel
+                                        dataSources[activeDataSourceId].previewData = newTransform.previewData;
+                                        const table = '<table><thead><tr>' +
+                                            newTransform.previewData.columns.map(col => `<th>${col}</th>`).join('') +
+                                            '</tr></thead><tbody>' +
+                                            newTransform.previewData.rows.map(row => '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>').join('') +
+                                            '</tbody></table>';
+                                        const wrapper = document.querySelector(`#tab-content-${activeDataSourceId} .preview-table-wrapper`);
+                                        wrapper.innerHTML = table;
+                                        const newTransformElement = renderTransformPanel(null, newTransform);
+                                        transformResultsContainer.prepend(newTransformElement);
+                                    }
+                                    
+                                    transformCommandInput.value = '';
+
+                                } catch (error) {
+                                    handleCodeGenerationError(error, 'transform', activeDataSourceId, command);
+                                } finally {
+                                    transformBtn.disabled = false;
+                                    transformBtn.textContent = 'Transform';
+                                }
+                            });
+
+                            analyzeBtn.addEventListener('click', async () => {
+                                const command = analysisCommandInput.value;
+                                if (!command || !activeDataSourceId) {
+                                    window.api.showErrorDialog('Missing Input', 'Please select a data source and enter a command.');
+                                    return;
+                                }
+
+                                analyzeBtn.disabled = true;
+                                analyzeBtn.textContent = 'Analyzing...';
+
+                                try {
+                                    const newAnalysis = await window.api.analyze(activeDataSourceId, command);
+                                    
+                                    if (!dataSources[activeDataSourceId].analyses) {
+                                        dataSources[activeDataSourceId].analyses = [];
+                                    }
+ 
+                                    // Check if the analysis already exists (e.g., from a failed attempt)
+                                    const existingIndex = dataSources[activeDataSourceId].analyses.findIndex(a => a.id === newAnalysis.id);
+                                    if (existingIndex > -1) {
+                                        // Replace the failed placeholder with the successful result
+                                        dataSources[activeDataSourceId].analyses[existingIndex] = newAnalysis;
+                                        // Re-render all analyses to reflect the update
+                                        analysisResultsContainer.innerHTML = '';
+                                        dataSources[activeDataSourceId].analyses.forEach(analysis => {
+                                            renderAnalysisPanel(analysisResultsContainer, analysis);
+                                        });
+                                    } else {
+                                        // Add the new analysis to the start
+                                        dataSources[activeDataSourceId].analyses.unshift(newAnalysis);
+                                        
+                                        // Prepend the new analysis to the container
+                                        const newAnalysisElement = renderAnalysisPanel(null, newAnalysis);
+                                        analysisResultsContainer.prepend(newAnalysisElement);
+                                    }
+
+                                    analysisCommandInput.value = '';
+
+                                    // If the new analysis itself is an error, show the modify modal
+                                    if (newAnalysis && newAnalysis.__pyError) {
+                                        showModifyAnalysisModal(activeDataSourceId, newAnalysis.id, true, newAnalysis.message, newAnalysis.code);
+                                    }
+
+                                } catch (error) {
+                                    window.api.showErrorDialog('System Error', `An unexpected error occurred: ${error.message}`);
+                                } finally {
+                                    analyzeBtn.disabled = false;
+                                    analyzeBtn.textContent = 'Analyze';
+                                }
+                            });
+            
+                            generatePlotBtn.addEventListener('click', async () => {
+                                const command = nlpCommandInput.value;
+                                if (!command || !activeDataSourceId) {
+                                    window.api.showErrorDialog('Missing Input', 'Please select a data source and enter a command.');
+                                    return;
+                                }
+                                
+                                generatePlotBtn.disabled = true;
+                                generatePlotBtn.textContent = 'Generating...';
+            
+                                try {
+                                    const result = await window.api.generatePlot(activeDataSourceId, command);
+                                    
+                                    if (!dataSources[activeDataSourceId].visualizations) {
+                                        dataSources[activeDataSourceId].visualizations = [];
+                                    }
+                                    dataSources[activeDataSourceId].visualizations.unshift(result);
+                                    
+                                    renderVisualization(visualizationsContainer, result, 0);
+                                    nlpCommandInput.value = '';
+
+                                    if (result && result.__pyError) {
+                                        showModifyModal(activeDataSourceId, result.id, true, result.message, result.code);
+                                    }
+                                } catch (error) {
+                                    handleCodeGenerationError(error, 'visualization', activeDataSourceId, command);
+                                } finally {
+                                    generatePlotBtn.disabled = false;
+                                    generatePlotBtn.textContent = 'Generate Plot';
+                                }                            });
+                        }
+                        function appendTransformLink(transformId, header, insertafter=false) {
+                            if (transformId) {
+                                for (const dataSource of Object.values(dataSources)) {
+                                    const transform = dataSource.transforms.find(t => t.id === transformId);
+                                    if (transform) {
+                                        const transformLinkContainer = document.createElement('div');
+                                        transformLinkContainer.style.fontSize = '12px';
+                                        transformLinkContainer.style.marginBottom = '10px';
+                                        
+                                        const link = document.createElement('a');
+                                        link.href = '#';
+                                        link.textContent = transform.name || transform.command;
+                                        link.onclick = (e) => {
+                                            e.preventDefault();
+                                            
+                                            const targetDataSourceId = dataSource.id;
+
+                                            // Switch to the correct data source tab if not already active
+                                            if (activeDataSourceId !== targetDataSourceId) {
+                                                switchTab(targetDataSourceId);
+                                            }
+
+                                            // Switch to the 'transform' inner tab
+                                            switchInnerTab(targetDataSourceId, 'transform');
+
+                                            // Use requestAnimationFrame to ensure the element is visible before scrolling
+                                            requestAnimationFrame(() => {
+                                                const transformElement = document.getElementById(`transform-item-${transformId}`);
+                                                if (transformElement) {
+                                                    transformElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                    // Highlight the element temporarily
+                                                    transformElement.style.transition = 'background-color 0.5s ease';
+                                                    transformElement.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
+                                                    setTimeout(() => {
+                                                        transformElement.style.backgroundColor = '';
+                                                    }, 2000);
+                                                }
+                                            });
+                                        };
+
+                                        transformLinkContainer.append('Based on transformation: ', link);
+
+                                        if (insertafter) {
+                                            header.insertAdjacentElement('afterend', transformLinkContainer);
+                                        } else {
+                                            header.appendChild(transformLinkContainer);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        function renderAnalysisPanel(container, analysis) {
+                            const { id, command, resultData, resultType, generatedCode, __pyError, message, code, transformId } = analysis;
+
+                            const analysisItem = document.createElement('div');
+                            analysisItem.className = 'visualization-item'; // Reuse styling
+                            analysisItem.id = `analysis-item-${id}`;
+
+                            const header = document.createElement('div');
+                            header.style.display = 'flex';
+                            header.style.justifyContent = 'space-between';
+                            header.style.alignItems = 'center';
+                            header.innerHTML = `
+                                <textarea class="item-name-input" rows="1" wrap="soft" placeholder="Enter name" 
+                                    style="font-size: 16px; font-weight: bold; border: none; background: transparent; width: 80%; overflow-y: auto; resize: none;"
+                                    data-item-id="${id}" data-item-type="analyses">${analysis.name || command}</textarea>
+                                <div>
+                                    <button class="modify-vis-btn" data-analysis-id="${id}" title="Modify Analysis">&#9998;</button>
+                                    <button class="delete-vis-btn" data-analysis-id="${id}" title="Delete Analysis">&times;</button>
+                                </div>
+                            `;
+                            analysisItem.appendChild(header);
+                            appendTransformLink(transformId, header, true);
+                            analysisItem.querySelector('.modify-vis-btn').addEventListener('click', (e) => {
+                                const analysisId = e.currentTarget.dataset.analysisId;
+                                // If there was an error, pass the error details to the modal
+                                if (__pyError) {
+                                    showModifyAnalysisModal(activeDataSourceId, analysisId, true, message, code);
+                                } else {
+                                    showModifyAnalysisModal(activeDataSourceId, analysisId);
+                                }
+                            });
+
+                            analysisItem.querySelector('.delete-vis-btn').addEventListener('click', (e) => {
+                                const analysisId = e.currentTarget.dataset.analysisId;
+                                showDeleteAnalysisConfirmation(activeDataSourceId, analysisId);
+                            });
+
+                            const nameInput = analysisItem.querySelector('.item-name-input');
+                            nameInput.addEventListener('change', (e) => {
+                                const newName = e.target.value;
+                                const itemId = e.target.dataset.itemId;
+                                const itemType = e.target.dataset.itemType;
+                                window.api.updateItemName(activeDataSourceId, itemId, itemType, newName);
+                            });
+                            setTimeout(() => autoAdjustTextareaHeight(nameInput), 0);
+
+                            const resultContainer = document.createElement('div');
+                            
+                            const codeBlock = document.createElement('pre');
+                            codeBlock.style.backgroundColor = '#f0f0f0';
+                            codeBlock.style.padding = '10px';
+                            codeBlock.style.borderRadius = '5px';
+                            codeBlock.style.whiteSpace = 'pre-wrap';
+                            codeBlock.style.marginTop = '10px';
+                            codeBlock.textContent = `Generated Code:\n${__pyError ? code : generatedCode}`;
+                            resultContainer.appendChild(codeBlock);
+
+                            const resultHeader = document.createElement('h4');
+                            resultHeader.textContent = __pyError ? 'Error:' : 'Result:';
+                            resultHeader.style.marginTop = '15px';
+                            resultContainer.appendChild(resultHeader);
+
+                            if (__pyError) {
+                                const p = document.createElement('p');
+                                p.style.color = '#c00';
+                                p.textContent = message;
+                                resultContainer.appendChild(p);
+                            } else if (resultType === 'dataframe' || resultType === 'series') {
+                                const data = JSON.parse(resultData);
+                                const table = document.createElement('table');
+                                const thead = document.createElement('thead');
+                                const tbody = document.createElement('tbody');
+                                
+                                const headerRow = document.createElement('tr');
+                                if (resultType === 'dataframe') {
+                                    data.columns.forEach(col => {
+                                        const th = document.createElement('th');
+                                        th.textContent = col;
+                                        headerRow.appendChild(th);
+                                    });
+                                } else { // Series
+                                    const th1 = document.createElement('th');
+                                    th1.textContent = data.index_name || 'Index';
+                                    headerRow.appendChild(th1);
+                                    const th2 = document.createElement('th');
+                                    th2.textContent = data.name || 'Value';
+                                    headerRow.appendChild(th2);
+                                }
+                                thead.appendChild(headerRow);
+
+                                if (resultType === 'dataframe') {
+                                    data.data.forEach(rowData => {
+                                        const tr = document.createElement('tr');
+                                        rowData.forEach(cellData => {
+                                            const td = document.createElement('td');
+                                            td.textContent = cellData;
+                                            tr.appendChild(td);
+                                        });
+                                        tbody.appendChild(tr);
+                                    });
+                                } else { // Series
+                                    data.index.forEach((index, i) => {
+                                        const tr = document.createElement('tr');
+                                        const tdIndex = document.createElement('td');
+                                        tdIndex.textContent = index;
+                                        tr.appendChild(tdIndex);
+                                        const tdValue = document.createElement('td');
+                                        tdValue.textContent = data.data[i];
+                                        tr.appendChild(tdValue);
+                                        tbody.appendChild(tr);
+                                    });
+                                }
+
+                                table.appendChild(thead);
+                                table.appendChild(tbody);
+                                resultContainer.appendChild(table);
+                            } else if (Array.isArray(resultData)) {
+                                const ul = document.createElement('ul');
+                                resultData.forEach(item => {
+                                    const li = document.createElement('li');
+                                    li.textContent = JSON.stringify(item);
+                                    ul.appendChild(li);
+                                });
+                                resultContainer.appendChild(ul);
+                            } else if (typeof resultData === 'object' && resultData !== null) {
+                                const pre = document.createElement('pre');
+                                pre.textContent = JSON.stringify(resultData, null, 2);
+                                resultContainer.appendChild(pre);
+                            } else {
+                                const p = document.createElement('p');
+                                p.textContent = resultData;
+                                resultContainer.appendChild(p);
+                            }
+
+                            analysisItem.appendChild(resultContainer);
+                            if (container) {
+                                container.prepend(analysisItem);
+                            }
+                            return analysisItem;
+                        }
+
+                        function renderTransformPanel(container, transform) {
+                            const { id, command, generatedCode, previewData, totalRows, __pyError, message, code, basedOn } = transform;
+
+                            const transformItem = document.createElement('div');
+                            transformItem.className = 'visualization-item'; // Reuse styling
+                            transformItem.id = `transform-item-${id}`;
+
+                            const header = document.createElement('div');
+                            header.style.display = 'flex';
+                            header.style.justifyContent = 'space-between';
+                            header.style.alignItems = 'center';
+                            header.innerHTML = `
+                                <textarea class="item-name-input" rows="1" wrap="soft" placeholder="Enter name"
+                                    style="font-size: 16px; font-weight: bold; border: none; background: transparent; width: 70%; overflow-y: auto; resize: none;"
+                                    data-item-id="${id}" data-item-type="transforms">${transform.name || command}</textarea>
+                                <div>
+                                    <button class="plot-btn" data-transform-id="${id}" title="New Plot from this" ${__pyError ? 'disabled' : ''}><b>&#128480;</b></button>
+                                    <button class="analysis-btn" data-transform-id="${id}" title="New Analysis from this" ${__pyError ? 'disabled' : ''}>&#131;</button>
+                                    <button class="transform-vis-btn" data-transform-id="${id}" title="New Transform from this" ${__pyError ? 'disabled' : ''}>&#128472;</button>
+                                    <button class="modify-vis-btn" data-transform-id="${id}" title="Modify Transform">&#9998;</button>
+                                    <button class="delete-vis-btn" data-transform-id="${id}" title="Delete Transform">&times;</button>
+                                </div>
+                            `;
+                            transformItem.appendChild(header);
+                            appendTransformLink(basedOn, header, true);
+
+                            transformItem.querySelector('.plot-btn').addEventListener('click', (e) => {
+                                const transformId = e.currentTarget.dataset.transformId;
+                                showPlotFromTransformModal(activeDataSourceId, transformId);
+                            });
+
+                            transformItem.querySelector('.analysis-btn').addEventListener('click', (e) => {
+                                const transformId = e.currentTarget.dataset.transformId;
+                                showAnalysisFromTransformModal(activeDataSourceId, transformId);
+                            });
+
+                            transformItem.querySelector('.transform-vis-btn').addEventListener('click', (e) => {
+                                const transformId = e.currentTarget.dataset.transformId;
+                                showNewTransformModal(activeDataSourceId, transformId);
+                            });
+
+                            transformItem.querySelector('.modify-vis-btn').addEventListener('click', (e) => {
+                                const transformId = e.currentTarget.dataset.transformId;
+                                if (__pyError) {
+                                    showModifyTransformModal(activeDataSourceId, transformId, true, message, code);
+                                } else {
+                                    showModifyTransformModal(activeDataSourceId, transformId);
+                                }
+                            });
+
+                            transformItem.querySelector('.delete-vis-btn').addEventListener('click', (e) => {
+                                const transformId = e.currentTarget.dataset.transformId;
+                                showDeleteTransformConfirmation(activeDataSourceId, transformId);
+                            });
+
+                            const nameInput = transformItem.querySelector('.item-name-input');
+                            nameInput.addEventListener('change', (e) => {
+                                const newName = e.target.value;
+                                const itemId = e.target.dataset.itemId;
+                                const itemType = e.target.dataset.itemType;
+                                window.api.updateItemName(activeDataSourceId, itemId, itemType, newName);
+                            });
+                            setTimeout(() => autoAdjustTextareaHeight(nameInput), 0);
+
+                            const resultContainer = document.createElement('div');
+
+                            if (__pyError) {
+                                resultContainer.innerHTML = `
+                                    <div style="color: #c00; background-color: #fdd; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                                        <strong>Error performing transform:</strong>
+                                        <p style="margin-top: 5px;">${message}</p>
+                                    </div>
+                                    <pre style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; white-space: pre-wrap; margin-top: 10px;">Generated Code:\n${code}</pre>
+                                `;
+                            } else {
+                                const buttonContainer = document.createElement('div');
+                                buttonContainer.style.marginTop = '10px';
+                                buttonContainer.innerHTML = `<button class="btn" id="view-data-btn-${id}" style="background-color: #777;">View Data</button> <button class="btn" id="export-csv-btn-${id}" style="margin-left: 10px;">Export CSV</button> <span style="color: var(--light-text-color); font-size: 12px;">(${totalRows} rows)</span>`;
+                                resultContainer.appendChild(buttonContainer);
+
+                                const exportCsvBtn = buttonContainer.querySelector(`#export-csv-btn-${id}`);
+                                exportCsvBtn.addEventListener('click', () => {
+                                    window.api.exportTransformData( activeDataSourceId, id );
+                                });
+
+                                const codeBlock = document.createElement('pre');
+                                codeBlock.style.backgroundColor = '#f0f0f0';
+                                codeBlock.style.padding = '10px';
+                                codeBlock.style.borderRadius = '5px';
+                                codeBlock.style.whiteSpace = 'pre-wrap';
+                                codeBlock.style.marginTop = '10px';
+                                codeBlock.textContent = `Generated Code:\n${generatedCode}`;
+                                resultContainer.appendChild(codeBlock);
+
+                                const tableContainer = document.createElement('div');
+                                tableContainer.className = 'preview-table-wrapper';
+                                tableContainer.style.display = 'none'; // Initially hidden
+                                tableContainer.style.marginTop = '10px';
+                                const table = '<table><thead><tr>' +
+                                    previewData.columns.map(col => `<th>${col}</th>`).join('') +
+                                    '</tr></thead><tbody>' +
+                                    previewData.rows.map(row => '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>').join('') +
+                                    '</tbody></table>';
+                                tableContainer.innerHTML = table;
+                                resultContainer.appendChild(tableContainer);
+
+                                const loadMoreContainer = document.createElement('div');
+                                loadMoreContainer.style.display = 'none';
+                                loadMoreContainer.style.marginTop = '10px';
+                                loadMoreContainer.innerHTML = `
+                                    <input type="number" id="load-more-input-${id}" min="1" max="100" value="10" style="width: 60px; padding: 5px;">
+                                    <button class="btn" id="load-more-btn-${id}">Load More</button>
+                                `;
+                                resultContainer.appendChild(loadMoreContainer);
+
+                                const viewDataBtn = buttonContainer.querySelector(`#view-data-btn-${id}`);
+                                viewDataBtn.addEventListener('click', () => {
+                                    if (tableContainer.style.display === 'none') {
+                                        tableContainer.style.display = 'block';
+                                        loadMoreContainer.style.display = 'block';
+                                        codeBlock.style.display = 'none';
+                                        viewDataBtn.textContent = 'View Code';
+                                    } else {
+                                        tableContainer.style.display = 'none';
+                                        loadMoreContainer.style.display = 'none';
+                                        codeBlock.style.display = 'block';
+                                        viewDataBtn.textContent = 'View Data';
+                                    }
+                                });
+
+                                const loadMoreBtn = loadMoreContainer.querySelector(`#load-more-btn-${id}`);
+                                loadMoreBtn.addEventListener('click', async () => {
+                                    const input = transformItem.querySelector(`#load-more-input-${id}`);
+                                    const rowsToLoad = parseInt(input.value, 10);
+                                    if (rowsToLoad > 0 && rowsToLoad <= 100) {
+                                        const tableBody = tableContainer.querySelector('tbody');
+                                        const currentRows = tableBody.rows.length;
+                                        try {
+                                            showLoader();
+                                            const newRows = await window.api.loadMoreData(activeDataSourceId, id, currentRows, rowsToLoad );
+                                            newRows.forEach(rowData => {
+                                                const tr = document.createElement('tr');
+                                                rowData.forEach(cellData => {
+                                                    const td = document.createElement('td');
+                                                    td.textContent = cellData;
+                                                    tr.appendChild(td);
+                                                });
+                                                tableBody.appendChild(tr);
+                                            });
+                                        } catch (error) {
+                                            window.api.showErrorDialog('Error Loading More Data', error.message);
+                                        } finally {
+                                            hideLoader();
+                                        }
+                                    } else {
+                                        window.api.showErrorDialog('Invalid Input', 'Please enter a number between 1 and 100.');
+                                    }
+                                });
+                            }
+                            
+                            transformItem.appendChild(resultContainer);
+
+                            if (container) {
+                                container.prepend(transformItem);
+                            }
+                            return transformItem;
+                        }
+            
+                        function switchTab(dataSourceId) {
+                            activeDataSourceId = dataSourceId;
+
+                            welcomeContainer.style.display = 'none';
+                            tabContainer.style.display = 'flex';
+                            tabContentContainer.style.display = 'block';
+
+                            document.querySelectorAll('#data-source-list li').forEach(li => li.classList.toggle('active', li.dataset.dataSourceId === dataSourceId));
+                            document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.dataSourceId === dataSourceId));
+                            document.querySelectorAll('.tab-content').forEach(content => content.classList.toggle('active', content.dataset.dataSourceId === dataSourceId));
+                        }
+
+                        function switchInnerTab(dataSourceId, tabName) {
+                            document.querySelectorAll(`#tab-content-${dataSourceId} .inner-tab`).forEach(tab => {
+                                tab.classList.toggle('active', tab.textContent.toLowerCase() === tabName);
+                            });
+                            document.querySelectorAll(`#tab-content-${dataSourceId} .inner-tab-content`).forEach(content => {
+                                content.classList.toggle('active', content.id === `${tabName}-content-${dataSourceId}`);
+                            });
+                        }
+
+                        function switchToTransform(transformId) {
+                            switchInnerTab(activeDataSourceId, 'transform');
+                            // Use requestAnimationFrame to ensure the element is visible before scrolling
+                            requestAnimationFrame(() => {
+                                const transformElement = document.getElementById(`transform-item-${transformId}`);
+                                if (transformElement) {
+                                    transformElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    transformElement.style.backgroundColor = 'var(--primary-hover-color)';
+                                    setTimeout(() => {
+                                        transformElement.style.backgroundColor = '';
+                                    }, 2000);
+                                }
+                            });
+                        }
+            
+                        addDataBtn.addEventListener('click', () => { addDataModal.style.display = 'flex'; });
+                        addDataModalCloseBtn.addEventListener('click', () => { addDataModal.style.display = 'none'; });
+                        
+                        settingsBtn.addEventListener('click', () => { 
+                            renderModelsSettings();
+                            settingsModal.style.display = 'flex'; 
+                        });
+                        settingsModalCloseBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
+            
+                        window.addEventListener('click', (event) => {
+                            if (event.target == addDataModal) addDataModal.style.display = 'none';
+                            if (event.target == settingsModal) settingsModal.style.display = 'none';
+                            if (event.target == modifyPlotModal) hideModifyModal();
+                            if (event.target == modifyAnalysisModal) hideModifyAnalysisModal();
+                            if (event.target == analysisFromTransformModal) hideAnalysisFromTransformModal();
+                            if (event.target == plotFromTransformModal) hidePlotFromTransformModal();
+                        });
+            
+                        saveSettingsBtn.addEventListener('click', async () => {
+                            const newModels = [];
+                            let newActiveModelId = null;
+                            const modelForms = modelsListContainer.querySelectorAll('.model-form');
+                            
+                            modelForms.forEach(form => {
+                                const id = form.dataset.modelId;
+                                const name = form.querySelector('.model-display-name').value;
+                                const provider = form.querySelector('.model-provider').value;
+                                const modelName = form.querySelector('.model-name').value;
+                                const apiKey = form.querySelector('.model-api-key').value;
+                                const baseUrl = form.querySelector('.model-base-url').value;
+                                const isActive = form.querySelector('input[name="active-model-radio"]').checked;
+
+                                newModels.push({ id, name, provider, modelName, apiKey, baseUrl });
+                                if (isActive) {
+                                    newActiveModelId = id;
+                                }
+                            });
+
+                            appSettings.models = newModels;
+                            appSettings.activeModelId = newActiveModelId;
+
+                            await window.api.saveSettings(appSettings);
+                            settingsModal.style.display = 'none';
+                        });
+            
+                        selectCsvBtn.addEventListener('click', async () => {
+                            addDataModal.style.display = 'none';
+                            showLoader();
+                            try {
+                                const { newDataSource, existingId } = await window.api.openFile();
+                                if (newDataSource) {
+                                    dataSources[newDataSource.id] = newDataSource;
+                                    createTabForDataSource(newDataSource);
+                                    updateDataSourceList();
+                                    switchTab(newDataSource.id);
+                                } else if (existingId) {
+                                    switchTab(existingId);
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('Error Loading File', error.message);
+                            } finally {
+                                hideLoader();
+                            }
+                        });
+
+                        selectSqliteBtn.addEventListener('click', async () => {
+                            addDataModal.style.display = 'none';
+                            showLoader();
+                            try {
+                                const result = await window.api.openSqliteFile();
+                                if (result) {
+                                    currentSqlitePath = result.filePath;
+                                    sqliteFilePathEl.textContent = result.filePath;
+                                    tableViewSelect.innerHTML = '';
+                                    result.schema.tables.forEach(name => {
+                                        const option = document.createElement('option');
+                                        option.value = name;
+                                        option.textContent = `[Table] ${name}`;
+                                        tableViewSelect.appendChild(option);
+                                    });
+                                    result.schema.views.forEach(name => {
+                                        const option = document.createElement('option');
+                                        option.value = name;
+                                        option.textContent = `[View] ${name}`;
+                                        tableViewSelect.appendChild(option);
+                                    });
+                                    sqliteSchemaContainer.style.display = 'block';
+                                    sqliteModal.style.display = 'flex';
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('Error Opening SQLite File', error.message);
+                            } finally {
+                                hideLoader();
+                            }
+                        });
+
+                        selectDerivedBtn.addEventListener('click', () => {
+                            addDataModal.style.display = 'none';
+                            baseSourcesSelect.innerHTML = '';
+                            // Populate with data sources
+                            Object.values(dataSources).forEach(ds => {
+                                const option = document.createElement('option');
+                                option.value = `ds:${ds.id}`;
+                                option.textContent = `[Source] ${ds.name}`;
+                                baseSourcesSelect.appendChild(option);
+
+                                // Populate with transforms from the data source
+                                if (ds.transforms && ds.transforms.length > 0) {
+                                    ds.transforms.forEach(t => {
+                                        const transformOption = document.createElement('option');
+                                        transformOption.value = `tr:${ds.id}:${t.id}`;
+                                        transformOption.textContent = `  ↳ [Transform] ${t.name || t.command}`;
+                                        baseSourcesSelect.appendChild(transformOption);
+                                    });
+                                }
+                            });
+                            derivedSourceModal.style.display = 'flex';
+                        });
+
+                        derivedSourceModalCloseBtn.addEventListener('click', () => {
+                            derivedSourceModal.style.display = 'none';
+                        });
+
+                        createDerivedSourceBtn.addEventListener('click', async () => {
+                            const selectedOptions = Array.from(baseSourcesSelect.selectedOptions).map(opt => opt.value);
+                            const newName = derivedSourceNameInput.value;
+                            const instruction = derivedSourceInstructionInput.value;
+
+                            if (selectedOptions.length < 2) {
+                                window.api.showErrorDialog('Invalid Selection', 'Please select at least two base sources.');
+                                return;
+                            }
+                            if (!newName) {
+                                window.api.showErrorDialog('Missing Input', 'Please provide a name for the new data source.');
+                                return;
+                            }
+                            if (!instruction) {
+                                window.api.showErrorDialog('Missing Input', 'Please provide an instruction for combining the sources.');
+                                return;
+                            }
+
+                            derivedSourceModal.style.display = 'none';
+                            showLoader();
+
+                            try {
+                                const newDataSource = await window.api.createDerivedDataSource(selectedOptions, newName, instruction);
+                                if (newDataSource) {
+                                    dataSources[newDataSource.id] = newDataSource;
+                                    createTabForDataSource(newDataSource);
+                                    updateDataSourceList();
+                                    switchTab(newDataSource.id);
+                                }
+                            } catch (error) {
+                                handleCodeGenerationError(error, 'derived data source', null, instruction);
+                            } finally {
+                                hideLoader();
+                            }
+                        });
+
+                        loadTableRadio.addEventListener('change', () => {
+                            if (loadTableRadio.checked) {
+                                customQueryTextarea.style.display = 'none';
+                            }
+                        });
+
+                        loadQueryRadio.addEventListener('change', () => {
+                            if (loadQueryRadio.checked) {
+                                customQueryTextarea.style.display = 'block';
+                            }
+                        });
+
+                        sqliteModalCloseBtn.addEventListener('click', () => {
+                            sqliteModal.style.display = 'none';
+                        });
+
+                        loadSqliteDataBtn.addEventListener('click', async () => {
+                            const loadType = document.querySelector('input[name="sqlite-load-type"]:checked').value;
+                            const sourceName = loadType === 'table' ? tableViewSelect.value : 'Custom Query';
+                            const query = loadType === 'query' ? customQueryTextarea.value : `SELECT * FROM "${tableViewSelect.value}"`;
+                            
+                            if (!query) {
+                                window.api.showErrorDialog('Input Error', 'Please select a table/view or provide a query.');
+                                return;
+                            }
+
+                            sqliteModal.style.display = 'none';
+                            showLoader();
+
+                            try {
+                                const newDataSource = await window.api.loadSqliteData(currentSqlitePath, query, sourceName);
+                                if (newDataSource) {
+                                    dataSources[newDataSource.id] = newDataSource;
+                                    createTabForDataSource(newDataSource);
+                                    updateDataSourceList();
+                                    switchTab(newDataSource.id);
+                                }
+                            } catch (error) {
+                                window.api.showErrorDialog('Error Loading SQLite Data', error.message);
+                            } finally {
+                                hideLoader();
+                            }
+                        });
+
+                        function renderModelsSettings() {
+                            modelsListContainer.innerHTML = '';
+                            appSettings.models.forEach(model => {
+                                const modelForm = document.createElement('div');
+                                modelForm.className = 'model-form';
+                                modelForm.dataset.modelId = model.id;
+                                modelForm.style.border = '1px solid #ccc';
+                                modelForm.style.borderRadius = '5px';
+                                modelForm.style.padding = '15px';
+                                modelForm.style.marginBottom = '15px';
+
+                                modelForm.innerHTML = `
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                        <input type="radio" name="active-model-radio" value="${model.id}" ${model.id === appSettings.activeModelId ? 'checked' : ''}>
+                                        <input type="text" class="model-display-name" value="${model.name}" placeholder="Configuration Name" style="flex-grow: 1; margin: 0 10px;">
+                                        <button class="remove-model-btn" style="background-color: #c00;">Remove</button>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+                                        <label>Provider:</label>
+                                        <select class="model-provider">
+                                            <option value="gemini" ${model.provider === 'gemini' ? 'selected' : ''}>Gemini</option>
+                                            <option value="openai" ${model.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                                        </select>
+                                        <label>Model Name:</label>
+                                        <input type="text" class="model-name" value="${model.modelName}" placeholder="e.g., gemini-1.5-flash">
+                                                                                 <label>API Key:</label>
+                                                                                <input type="password" class="model-api-key" value="${model.apiKey}" placeholder="Enter API Key">
+                                                                                <label class="openai-base-url-label" style="display: ${model.provider === 'openai' ? 'block' : 'none'};">Base URL:</label>
+                                                                                <input type="text" class="model-base-url" value="${model.baseUrl || ''}" placeholder="e.g., https://api.openai.com/v1" style="display: ${model.provider === 'openai' ? 'block' : 'none'};">
+                                                                            </div>
+                                                                        `;
+                                                                        modelsListContainer.appendChild(modelForm);
+                                        
+                                                                        const providerSelect = modelForm.querySelector('.model-provider');
+                                                                        const baseUrlLabel = modelForm.querySelector('.openai-base-url-label');
+                                                                        const baseUrlInput = modelForm.querySelector('.model-base-url');
+                                        
+                                                                        providerSelect.addEventListener('change', (e) => {
+                                                                            if (e.target.value === 'openai') {
+                                                                                baseUrlLabel.style.display = 'block';
+                                                                                baseUrlInput.style.display = 'block';
+                                                                            } else {
+                                                                                baseUrlLabel.style.display = 'none';
+                                                                                baseUrlInput.style.display = 'none';
+                                                                            }
+                                                                        });
+                                                                    });
+                                                                }
+                                        
+                                                                addModelBtn.addEventListener('click', () => {
+                                                                    const newId = `temp_${Date.now()}`; // Temporary ID
+                                                                    appSettings.models.push({
+                                                                        id: newId,
+                                                                        name: 'New Model',
+                                                                        provider: 'gemini',
+                                                                        modelName: 'gemini-1.5-flash',
+                                                                        apiKey: '',
+                                                                        baseUrl: ''
+                                                                    });
+                                                                    renderModelsSettings();
+                                                                });
+                                        
+                                                                modelsListContainer.addEventListener('click', (e) => {
+                                                                    if (e.target.classList.contains('remove-model-btn')) {
+                                                                        const modelForm = e.target.closest('.model-form');
+                                                                        const modelIdToRemove = modelForm.dataset.modelId;
+                                                                        appSettings.models = appSettings.models.filter(m => m.id !== modelIdToRemove);
+                                                                        if (appSettings.activeModelId === modelIdToRemove && appSettings.models.length > 0) {
+                                                                            appSettings.activeModelId = appSettings.models[0].id;
+                                                                        } else if (appSettings.models.length === 0) {
+                                                                            appSettings.activeModelId = null;
+                                                                        }
+                                                                        renderModelsSettings();
+                                                                    } else if (e.target.name === 'active-model-radio') {
+                                                                        const modelId = e.target.value;
+                                                                        window.api.setActiveModel(modelId);
+                                                                        appSettings.activeModelId = modelId;
+                                                                    }
+                                                                });
+                                                    
+                                                                async function init() {
+                                                                    const initialState = await window.api.getInitialState();
+                                                                    // console.log(`${initialState}`);
+                                                                    if (initialState) {
+                                                                        appSettings = initialState.settings || {};
+                                                                        dataSources = initialState.dataSources || {};
+                                                                        
+                                                                        const dataSourceIds = Object.keys(dataSources);
+                                                                        console.log(`INFO: ${dataSourceIds.length}`);
+                                                                        if (dataSourceIds.length > 0) {
+                                                                            welcomeContainer.style.display = 'none';
+                                                                            tabContainer.style.display = 'flex';
+                                                                            tabContentContainer.style.display = 'block';
+                                                                            dataSourceIds.forEach(id => {
+                                                                                createTabForDataSource(dataSources[id]);
+                                                                            });
+                                                                            updateDataSourceList();
+                                                                            switchTab(dataSourceIds[0]);
+                                                                        }
+                                                                    }
+                                                                }
+                                                                console.log("INFO: UI initializing");
+                                                    
+                                                                init();
+                                                            });
+                                        
+                                                function switchInnerTab(dataSourceId, tabName) {
+                                                    // Deactivate all inner tabs for the current data source
+                                                    document.querySelectorAll(`#tab-content-${dataSourceId} .inner-tab`).forEach(tab => {
+                                                        tab.classList.remove('active');
+                                                    });
+                                                    // Deactivate all inner tab contents for the current data source
+                                                    document.querySelectorAll(`#tab-content-${dataSourceId} .inner-tab-content`).forEach(content => {
+                                                        content.classList.remove('active');
+                                                    });
+                                        
+                                                    // Activate the clicked tab and its corresponding content
+                                                    const tabElement = document.querySelector(`#tab-content-${dataSourceId} .inner-tab[onclick*="'${tabName}'"]`);
+                                                    const contentElement = document.getElementById(`${tabName}-content-${dataSourceId}`);
+                                                    if (tabElement) tabElement.classList.add('active');
+                                                    if (contentElement) contentElement.classList.add('active');
+                                                }
+                                            </script>
+                                        </body>
+                                        </html>
