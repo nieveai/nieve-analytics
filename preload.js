@@ -26,5 +26,6 @@ contextBridge.exposeInMainWorld('api', {
   createDerivedDataSource: (selectedSources, newName, instruction) => ipcRenderer.invoke('create-derived-data-source', { selectedSources, newName, instruction }),
   loadMoreData: (dataSourceId, transformId, offset, limit) => ipcRenderer.invoke('load-more-data', { dataSourceId, transformId, offset, limit }),
   exportTransformData: (dataSourceId, transformId) => ipcRenderer.invoke('export-transform-data', { dataSourceId, transformId }),
-  showErrorDialog: (title, content) => ipcRenderer.invoke('show-error-dialog', { title, content })
+  showErrorDialog: (title, content) => ipcRenderer.invoke('show-error-dialog', { title, content }),
+  abortActiveRequest: () => ipcRenderer.invoke('abort-active-request')
 });

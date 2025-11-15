@@ -17,6 +17,7 @@ class PythonManager {
         this.socket = new zmq.Request();
         this.socket.connect('tcp://127.0.0.1:5555');
         this.requests = new Map();
+        this.activeRequestId = null;
         this.readyPromise = this.startProcess();
         console.log("Python process starting...");
     }    
@@ -63,6 +64,9 @@ class PythonManager {
                 const response = JSON.parse(msg.toString());
                 const { requestId, success, payload, error } = response;
                                 if (this.requests.has(requestId)) {
+                                    if (requestId === this.activeRequestId) {
+                                        this.activeRequestId = null;
+                                    }
                                     const { resolve, reject } = this.requests.get(requestId);
                                     if (success) {
                                         resolve({ success: true, payload: payload });
@@ -73,6 +77,7 @@ class PythonManager {
                                 }
                             } catch (e) {
                                 logError(`Error parsing JSON from Python: ${msg.toString()}`);
+                                this.activeRequestId = null;
                                 // If we can't parse the response, we don't know which request it was for.
                                 // To prevent the app from hanging, we reject all pending requests.
                                 const errorMessage = `Invalid JSON response from Python: ${msg.toString()}`;
@@ -89,12 +94,24 @@ class PythonManager {
             throw new Error("Python process is not running.");
         }
         const requestId = crypto.randomUUID();
+        this.activeRequestId = requestId;
         const request = { command, payload, requestId };
         console.log(`Sending ZMQ request: ${requestId}`);
         await this.socket.send(JSON.stringify(request));
         return new Promise((resolve, reject) => {
             this.requests.set(requestId, { resolve, reject });
         });
+    }
+
+    abortActiveRequest() {
+        if (this.activeRequestId && this.requests.has(this.activeRequestId)) {
+            const { reject } = this.requests.get(this.activeRequestId);
+            reject(new Error('Operation aborted by user.'));
+            this.requests.delete(this.activeRequestId);
+            this.activeRequestId = null;
+            return true;
+        }
+        return false;
     }
 }
 
@@ -619,6 +636,18 @@ ipcMain.handle('modify-transform', (event, dataSourceId, transformId, existingCo
             saveState();
             return modifiedTransform;
         }
+    }).then(result => {
+        if (result && result.__pyError) {
+            const transformIndex = dataSource.transforms.findIndex(t => t.id === transformId);
+            if (transformIndex > -1) {
+                const originalTransform = dataSource.transforms[transformIndex];
+                const modifiedTransform = { id: originalTransform.id, basedOn: originalTransform.basedOn, command: `${originalTransform.command} (modified: ${instruction})`, ...result };
+                dataSource.transforms[transformIndex] = modifiedTransform;
+                saveState();
+                return modifiedTransform;
+            }
+        }
+        return result;
     });
 });
 
@@ -633,6 +662,18 @@ ipcMain.handle('run-modified-transform-code', (event, dataSourceId, transformId,
             saveState();
             return updatedTransform;
         }
+    }).then(result => {
+        if (result && result.__pyError) {
+            const transformIndex = dataSource.transforms.findIndex(t => t.id === transformId);
+            if (transformIndex > -1) {
+                const originalTransform = dataSource.transforms[transformIndex];
+                const updatedTransform = { id: originalTransform.id, command: originalTransform.command, generatedCode: modifiedCode, basedOn: originalTransform.basedOn, ...result };
+                dataSource.transforms[transformIndex] = updatedTransform;
+                saveState();
+                return updatedTransform;
+            }
+        }
+        return result;
     });
 });
 
@@ -798,6 +839,13 @@ ipcMain.handle('update-item-name', async (event, { dataSourceId, itemId, itemTyp
     }
 });
 
+
+ipcMain.handle('abort-active-request', () => {
+    if (pythonManager) {
+        return pythonManager.abortActiveRequest();
+    }
+    return false;
+});
 
 ipcMain.handle('show-error-dialog', (event, { title, content }) => {
     const window = BrowserWindow.getFocusedWindow();

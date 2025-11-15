@@ -176,6 +176,12 @@
             min-width: 100%;
         }
         .modal-overlay { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        #loader-overlay { 
+            pointer-events: none; 
+        }
+        #abort-btn {
+            pointer-events: auto;
+        }
         .modal-content { background-color: var(--panel-background); padding: 30px; border: 1px solid var(--border-color); width: 80%; max-width: 500px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); position: relative; }
         .modal-close { color: #aaa; position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
         .modal-close:hover, .modal-close:focus { color: var(--text-color); }
@@ -302,8 +308,10 @@
         </div>
     </div>
 
-    <div id="loader-overlay" class="modal-overlay" style="z-index: 200;">
+    <div id="loader-overlay" class="modal-overlay" style="z-index: 200; flex-direction: column;">
         <div class="spinner"></div>
+        <p style="color: white; margin-top: 10px;">Processing...</p>
+        <button id="abort-btn" class="btn" style="margin-top: 20px; background-color: #c00;">Abort</button>
     </div>
 
     <div id="confirm-delete-modal" class="modal-overlay" style="z-index: 201;">
@@ -474,6 +482,7 @@
                         let appSettings = {};
             
                         const loaderOverlay = document.getElementById('loader-overlay');
+                        const abortBtn = document.getElementById('abort-btn');
                         const addDataBtn = document.getElementById('add-data-btn');
                         const dataSourceList = document.getElementById('data-source-list');
                         const tabContainer = document.getElementById('tab-container');
@@ -581,6 +590,10 @@
                         const errorMessageContent = document.getElementById('error-message-content');
                         const errorModalCloseBtn = errorModal.querySelector('.modal-close');
                         errorModalCloseBtn.addEventListener('click', () => errorModal.style.display = 'none');
+
+                        abortBtn.addEventListener('click', () => {
+                            window.api.abortActiveRequest();
+                        });
 
                         function autoAdjustTextareaHeight(textarea) {
                             textarea.style.height = (textarea.scrollHeight + 20) + 'px';

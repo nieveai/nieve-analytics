@@ -493,7 +493,7 @@ def create_derived_data_source(sources, instruction, new_data_source_id):
     
     preview_data = {
         "columns": derived_df.columns.tolist(),
-        "rows": derived_df.head(5).values.tolist()
+        "rows": derived_df.head(5).fillna('').values.tolist()
     }
 
     return {
@@ -516,7 +516,7 @@ def load_more_data(datasource_handler, transform_id, offset, limit):
     
     more_rows_df = df.iloc[offset:end_index]
     
-    return more_rows_df.values.tolist()
+    return more_rows_df.fillna('').values.tolist()
 
 def export_transform_data(datasource_handler, transform_id):
     df = datasource_handler.get_dataframe(transform_id=transform_id)
@@ -622,10 +622,10 @@ def main():
                 }
             }
         try:
-            response_json = json.dumps(response, cls=NumpyEncoder)
+            response_json = json.dumps(response, cls=NumpyEncoder, default=str)
             logging.debug(f"Sending response: {response_json}")
         except Exception as e:
-            logging.error(f"failed to serialize the response")
+            logging.error(f"failed to serialize the response because of {str(e)}")
             response = {
                 "requestId": request_id,
                 "success": False,
