@@ -410,12 +410,16 @@ async function handlePythonRequest(command, payload, stateUpdateLogic) {
             }
             return result.payload;
         } else {
-            // This is a handled error from Python (e.g., code execution failed).
-            // We pass it to the renderer as a "successful" response containing the error.
+            // This is a handled error from Python.
+            if (result.error.type === 'GenericError') {
+                // For generic errors, we want to reject the promise so the UI can show a generic error message.
+                throw new Error(result.error.message);
+            }
+            // For code execution errors, we pass it to the renderer as a "successful" response containing the error.
             return { __pyError: true, ...result.error };
         }
     } catch (error) {
-        // This catches system-level errors (e.g., Python process crashed).
+        // This catches system-level errors (e.g., Python process crashed) or GenericErrors thrown above.
         logError(error);
         throw error; // Re-throw to reject the promise for the renderer.
     }
@@ -471,7 +475,7 @@ ipcMain.handle('modify-plot', (event, dataSourceId, visualizationId, existingCod
     const dataSource = getDataSourceConfig(appState.dataSources[dataSourceId]);
     const originalVis = dataSource.visualizations.find((v, index) => v.id === visualizationId || index === visualizationId);
     const transformId = originalVis ? originalVis.transformId : null;
-    return handlePythonRequest('modify_plot', { data_source: dataSource, visualization_id: visualizationId, existing_code: existingCode, instruction }, (result) => {
+    return handlePythonRequest('modify_plot', { data_source: dataSource, visualization_id: visualizationId, existing_code: existingCode, instruction, transform_id: transformId }, (result) => {
         const visIndex = dataSource.visualizations.findIndex((v, index) => v.id === visualizationId || index === visualizationId);
         if (visIndex > -1) {
             const originalVis = dataSource.visualizations[visIndex];
@@ -480,6 +484,18 @@ ipcMain.handle('modify-plot', (event, dataSourceId, visualizationId, existingCod
             saveState();
             return modifiedVis;
         }
+    }).then(result => {
+        if (result && result.__pyError) {
+            const visIndex = dataSource.visualizations.findIndex((v, index) => v.id === visualizationId || index === visualizationId);
+            if (visIndex > -1) {
+                const originalVis = dataSource.visualizations[visIndex];
+                const modifiedVis = { id: originalVis.id, command: `${originalVis.command} (modified: ${instruction})`, transformId: transformId, ...result };
+                dataSource.visualizations[visIndex] = modifiedVis;
+                saveState();
+                return modifiedVis;
+            }
+        }
+        return result;
     });
 });
 
@@ -500,6 +516,18 @@ ipcMain.handle('run-modified-code', (event, dataSourceId, visualizationId, modif
             return updatedVis;
         }
         // console.log('[DEBUG] Visualization not found. Returning undefined.');
+    }).then(result => {
+        if (result && result.__pyError) {
+            const visIndex = dataSource.visualizations.findIndex((v, index) => v.id === visualizationId || index === visualizationId);
+            if (visIndex > -1) {
+                const originalVis = dataSource.visualizations[visIndex];
+                const updatedVis = { id: originalVis.id, command: originalVis.command, transformId: transformId, generatedCode: modifiedCode, ...result };
+                dataSource.visualizations[visIndex] = updatedVis;
+                saveState();
+                return updatedVis;
+            }
+        }
+        return result;
     });
 });
 
@@ -531,7 +559,7 @@ ipcMain.handle('modify-analysis', (event, dataSourceId, analysisId, existingCode
     const dataSource = getDataSourceConfig(appState.dataSources[dataSourceId]);
     const analysis = dataSource.analyses.find(a => a.id === analysisId);
     const transformId = analysis ? analysis.transformId : null;
-    return handlePythonRequest('modify_analysis', { data_source: dataSource, existing_code: existingCode, instruction }, (result) => {
+    return handlePythonRequest('modify_analysis', { data_source: dataSource, existing_code: existingCode, instruction, transformId: transformId }, (result) => {
         const analysisIndex = dataSource.analyses.findIndex(a => a.id === analysisId);
         if (analysisIndex > -1) {
             const originalAnalysis = dataSource.analyses[analysisIndex];
@@ -586,7 +614,7 @@ ipcMain.handle('modify-transform', (event, dataSourceId, transformId, existingCo
         const transformIndex = dataSource.transforms.findIndex(t => t.id === transformId);
         if (transformIndex > -1) {
             const originalTransform = dataSource.transforms[transformIndex];
-            const modifiedTransform = { id: originalTransform.id, command: `${originalTransform.command} (modified: ${instruction})`, ...result };
+            const modifiedTransform = { id: originalTransform.id, basedOn: originalTransform.basedOn, command: `${originalTransform.command} (modified: ${instruction})`, ...result };
             dataSource.transforms[transformIndex] = modifiedTransform;
             saveState();
             return modifiedTransform;
@@ -600,7 +628,7 @@ ipcMain.handle('run-modified-transform-code', (event, dataSourceId, transformId,
         const transformIndex = dataSource.transforms.findIndex(t => t.id === transformId);
         if (transformIndex > -1) {
             const originalTransform = dataSource.transforms[transformIndex];
-            const updatedTransform = { id: originalTransform.id, command: originalTransform.command, generatedCode: modifiedCode, ...result };
+            const updatedTransform = { id: originalTransform.id, command: originalTransform.command, generatedCode: modifiedCode, basedOn: originalTransform.basedOn, ...result };
             dataSource.transforms[transformIndex] = updatedTransform;
             saveState();
             return updatedTransform;

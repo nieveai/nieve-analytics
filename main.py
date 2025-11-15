@@ -298,7 +298,7 @@ def transform_data(datasource_handler, command, transform_id):
     # Return a preview of the transformed data
     preview_data = {
         "columns": transformed_df.columns.tolist(),
-        "rows": transformed_df.head(5).values.tolist()
+        "rows": transformed_df.head(5).fillna('').values.tolist()
     }
 
     return {
@@ -352,7 +352,7 @@ def modify_transform_data(datasource_handler, existing_code, instruction, transf
     
     preview_data = {
         "columns": transformed_df.columns.tolist(),
-        "rows": transformed_df.head(5).values.tolist()
+        "rows": transformed_df.head(5).fillna('').values.tolist()
     }
 
     return {
@@ -385,7 +385,7 @@ def run_transform_code(datasource_handler, code_to_run, transform_id):
     
     preview_data = {
         "columns": transformed_df.columns.tolist(),
-        "rows": transformed_df.head(5).values.tolist()
+        "rows": transformed_df.head(5).fillna('').values.tolist()
     }
 
     return {
@@ -431,7 +431,7 @@ def new_transform_data(datasource_handler, parent_transform_id, instruction, new
     # Return a preview of the transformed data
     preview_data = {
         "columns": transformed_df.columns.tolist(),
-        "rows": transformed_df.head(5).values.tolist()
+        "rows": transformed_df.head(5).fillna('').values.tolist()
     }
 
     return {
